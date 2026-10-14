@@ -90,6 +90,7 @@ Onboarding de 30 dias incluso no mês 01</textarea></label>
         <textarea id="condicoes" rows="3">Pagamento mensal por PIX ou boleto
 Vencimento todo dia 10
 Contrato de 6 meses · 2 primeiros de experiência</textarea></label>
+      <label for="ig">Instagram para o cliente conhecer o trabalho <small>(@perfil, um por linha · fica salvo para os próximos)</small><textarea id="ig" rows="2" placeholder="@take3digital&#10;@cliente.que.atendemos"></textarea></label>
       <label for="obs">Observações da proposta <small>(opcional)</small><textarea id="obs" rows="3" maxlength="1200" placeholder="Ex.: Diária extra de captação: R$ 600,00. Início previsto para 01/11."></textarea></label>
     </div>
 
@@ -147,7 +148,8 @@ Contrato de 6 meses · 2 primeiros de experiência</textarea></label>
     it: ['8 a 12 posts por mês + stories do calendário','1 diária de captação por mês','Direct respondido em até 24h úteis','Reunião mensal com relatório de resultados','Onboarding de 30 dias incluso no mês 01'],
     co: ['Pagamento mensal por PIX ou boleto','Vencimento todo dia 10','Contrato de 6 meses · 2 primeiros de experiência'] };
   var CAMPOS = ['c','pl','it','v','pe','co','o','val','em'];
-  function canon(get){ return CAMPOS.map(function(k){ return get(k) || ''; }).join('\u0001'); }
+  function canon(get){ var s = CAMPOS.map(function(k){ return get(k) || ''; }).join('\u0001'); return get('ig') ? s + '\u0001' + get('ig') : s; }
+  function perfis(txt){ return String(txt || '').split(/[|\s,]+/).map(function(h){ return h.replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/[/?].*$/, ''); }).filter(function(h){ return /^[A-Za-z0-9._]{1,30}$/.test(h); }).slice(0, 6); }
   function isoDe(s){ return /^\d{8}$/.test(s || '') ? s.slice(0,4) + '-' + s.slice(4,6) + '-' + s.slice(6) : (s || ''); }
   function moeda(v){ return /^\d+(\.\d{1,2})?$/.test(v) ? Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }).replace(/\u00a0/g, ' ') : v; }
   var $ = function(id){ return document.getElementById(id); };
@@ -158,6 +160,7 @@ Contrato de 6 meses · 2 primeiros de experiência</textarea></label>
   document.querySelectorAll('[data-dias]').forEach(function(b){ b.addEventListener('click', function(){ definirValidade(+b.dataset.dias); }); });
   $('validade').addEventListener('change', mostrarValidade);
   definirValidade(15);
+  try { var igSalvo = localStorage.getItem('take3.ig'); if (igSalvo) $('ig').value = igSalvo; } catch (e) {}
 
   var base = location.href.replace(/[?#].*$/, '').replace(/[^/]*$/, '');
   $('form').addEventListener('submit', function(e){
@@ -173,12 +176,14 @@ Contrato de 6 meses · 2 primeiros de experiência</textarea></label>
       pl: $('plano').value.trim() === PADRAO.pl ? '' : $('plano').value.trim(),
       pe: $('periodo').value.trim() === PADRAO.pe ? '' : $('periodo').value.trim(),
       it: it === PADRAO.it.join('|') ? '' : it, co: co === PADRAO.co.join('|') ? '' : co,
-      o: $('obs').value.trim().replace(/\s*\n\s*/g, ' · '), val: val.replace(/-/g, ''), em: iso(new Date()).replace(/-/g, '') };
+      o: $('obs').value.trim().replace(/\s*\n\s*/g, ' · '), ig: perfis($('ig').value).join('|'), val: val.replace(/-/g, ''), em: iso(new Date()).replace(/-/g, '') };
     var qs = new URLSearchParams();
     CAMPOS.forEach(function(x){ if (dados[x]) qs.set(x, dados[x]); });
+    if (dados.ig) qs.set('ig', dados.ig);
     qs.set('k', hash(SAL + canon(function(x){ return dados[x]; })));
+    try { localStorage.setItem('take3.ig', $('ig').value); } catch (e2) {}
     var orc = base + 'orcamento.html?' + qs.toString();
-    var prop = base + 'index.html?para=' + encodeURIComponent(c);
+    var prop = base + 'index.html?para=' + encodeURIComponent(c) + (dados.ig ? '&ig=' + encodeURIComponent(dados.ig) : '');
     $('linkOrc').value = orc; $('abrirOrc').href = orc;
     $('linkProp').value = prop; $('abrirProp').href = prop;
     $('saida').hidden = false; $('copiado').textContent = '';

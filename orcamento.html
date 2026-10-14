@@ -79,7 +79,8 @@ footer{color:var(--dim);font-size:12.5px;letter-spacing:.06em;display:flex;flex-
     it: ['8 a 12 posts por mês + stories do calendário','1 diária de captação por mês','Direct respondido em até 24h úteis','Reunião mensal com relatório de resultados','Onboarding de 30 dias incluso no mês 01'],
     co: ['Pagamento mensal por PIX ou boleto','Vencimento todo dia 10','Contrato de 6 meses · 2 primeiros de experiência'] };
   var CAMPOS = ['c','pl','it','v','pe','co','o','val','em'];
-  function canon(get){ return CAMPOS.map(function(k){ return get(k) || ''; }).join('\u0001'); }
+  function canon(get){ var s = CAMPOS.map(function(k){ return get(k) || ''; }).join('\u0001'); return get('ig') ? s + '\u0001' + get('ig') : s; }
+  function perfis(txt){ return String(txt || '').split(/[|\s,]+/).map(function(h){ return h.replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/[/?].*$/, ''); }).filter(function(h){ return /^[A-Za-z0-9._]{1,30}$/.test(h); }).slice(0, 6); }
   function isoDe(s){ return /^\d{8}$/.test(s || '') ? s.slice(0,4) + '-' + s.slice(4,6) + '-' + s.slice(6) : (s || ''); }
   function moeda(v){ return /^\d+(\.\d{1,2})?$/.test(v) ? Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }).replace(/\u00a0/g, ' ') : v; }
   var app = document.getElementById('app');
@@ -91,7 +92,7 @@ footer{color:var(--dim);font-size:12.5px;letter-spacing:.06em;display:flex;flex-
     else if (q.get('c') && hash(SAL + canon(function(x){ return q.get(x); })) === k) {   // link curto
       var sep = function(x){ return x ? x.split('|').map(function(t){ return t.trim(); }).filter(Boolean) : null; };
       d = { c: q.get('c'), pl: q.get('pl') || PADRAO.pl, it: sep(q.get('it')) || PADRAO.it, v: moeda(q.get('v') || ''), pe: q.get('pe') || PADRAO.pe,
-            co: sep(q.get('co')) || PADRAO.co, o: q.get('o') || '', val: isoDe(q.get('val')), em: isoDe(q.get('em')) };
+            co: sep(q.get('co')) || PADRAO.co, o: q.get('o') || '', ig: perfis(q.get('ig')), val: isoDe(q.get('val')), em: isoDe(q.get('em')) };
     }
   } catch (e) { d = null; }
   if (!d){ aviso('Link de orçamento inválido', 'Este link está incompleto ou foi alterado. Peça à Take3 um novo link do seu orçamento.'); return; }
@@ -117,7 +118,7 @@ footer{color:var(--dim);font-size:12.5px;letter-spacing:.06em;display:flex;flex-
       '</div>' +
       (d.o ? '<section class="card"><p class="tag" style="color:var(--yellow)">Observações</p><p class="obs">' + esc(d.o) + '</p></section>' : '');
   }
-  var ig = (window.PORTFOLIO || []).filter(function(x){ return x && /^https:\/\//.test(x.url || ''); });
+  var ig = (d.ig || []).map(function(h){ return { nome: '@' + h, url: 'https://www.instagram.com/' + h + '/' }; }).concat((window.PORTFOLIO || []).filter(function(x){ return x && /^https:\/\//.test(x.url || ''); }));
   if (ig.length) html += '<section class="card"><p class="tag">Conheça nosso trabalho</p><div class="ig">' + ig.map(function(x){ return '<a href="' + esc(x.url) + '" target="_blank" rel="noopener"><b>' + esc(x.nome) + '</b>' + (x.desc ? '<span>' + esc(x.desc) + '</span>' : '') + '<em>Ver no Instagram →</em></a>'; }).join('') + '</div></section>';
   html += '<div class="acoes"><a class="btn ghost" href="' + esc(proposta) + '">Ver a apresentação do Social</a></div>' +
     '<footer><span>Take3 Digital · Social media para restaurantes</span><span>Emitido em ' + dataBR(d.em) + '</span></footer>';
