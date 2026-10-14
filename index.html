@@ -169,6 +169,10 @@ h1{font-size:88px}h2{font-size:68px}
 .on .timeline .fill{width:80%}
 /* ===== modo retrato: celular em pé (palco 900x1600) ===== */
 .retrato #stage{width:620px;height:1100px}
+.retrato #wrap{place-items:start center;padding-top:calc(8px + env(safe-area-inset-top,0px))}
+.retrato #nav{right:14px;bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+.retrato #menuBtn{left:14px;bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+.retrato #nav button,.retrato #menuBtn{width:42px;height:42px}
 .retrato .slide{padding:78px 30px 40px;overflow-y:auto;overflow-x:hidden}
 .retrato .foot{left:30px;right:30px;bottom:24px;font-size:11px;letter-spacing:.14em}
 .retrato .slide p,.retrato .slide li,.retrato .slide td,.retrato .slide small{font-size:19px!important;line-height:1.5!important}
@@ -740,7 +744,7 @@ const deck = {
   document.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
   document.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){dx<0?next():prev()}},{passive:true});
 
-  function fit(){const ret=innerWidth<innerHeight*0.85;document.documentElement.classList.toggle('retrato',ret);document.body.classList.toggle('retrato',ret);const W=ret?620:1600,H=ret?1100:900,w=innerWidth-(ret?12:32),h=innerHeight-(ret?12:24),k=Math.min(w/W,h/H);stage.style.transform=`scale(${k})`;stage.style.marginLeft=stage.style.marginRight=`-${W*(1-k)/2}px`;stage.style.marginTop=stage.style.marginBottom=`-${H*(1-k)/2}px`}
+  function fit(){const ret=innerWidth<innerHeight*0.85;document.documentElement.classList.toggle('retrato',ret);document.body.classList.toggle('retrato',ret);const w=innerWidth-32,h=innerHeight-(ret?78:24),W=ret?620:1600,H=ret?Math.max(1000,Math.round(620*h/w)):900,k=Math.min(w/W,h/H);stage.style.height=ret?H+'px':'';stage.style.transform=`scale(${k})`;stage.style.marginLeft=stage.style.marginRight=`-${W*(1-k)/2}px`;if(ret){stage.style.transformOrigin='top center';stage.style.marginTop='0px';stage.style.marginBottom=`-${H*(1-k)}px`}else{stage.style.transformOrigin='center';stage.style.marginTop=stage.style.marginBottom=`-${H*(1-k)/2}px`}}
   addEventListener('resize',fit); fit();
   setTimeout(()=>document.getElementById('hint').classList.add('gone'),7000);
 

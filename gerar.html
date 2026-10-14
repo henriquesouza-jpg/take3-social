@@ -43,6 +43,18 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
 .link input{flex:1 1 260px;font-size:14px;color:var(--muted)}
 .link a{color:var(--yellow);font-weight:600;font-size:14px;align-self:center}
 .ok{color:var(--ok);font-size:13px;font-weight:600;min-height:18px}
+.lista{display:grid;gap:10px}
+.item{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--campo)}
+.item b{font-size:15px}
+.item .meta{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.item .status{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:999px;justify-self:end}
+.status.valido{background:rgba(46,229,157,.14);color:var(--ok)}
+.status.expirado{background:rgba(255,77,77,.14);color:#ff8080}
+.item .acts{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:8px}
+.item .acts button,.item .acts a{font-size:13px;padding:7px 12px}
+.item .acts a{color:var(--yellow);font-weight:600;text-decoration:none;border:1px solid var(--line);border-radius:10px}
+.vazio{color:var(--dim);font-size:14px;margin:0}
+.btn-arquivo{display:inline-flex;align-items:center;font:600 15px var(--font);border-radius:10px;padding:11px 16px;cursor:pointer;border:1px solid var(--line);color:var(--fg)}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -109,6 +121,19 @@ Contrato de 6 meses · 2 primeiros de experiência</textarea></label>
     </div>
     <p class="ok" id="copiado"></p>
   </section>
+
+  <section class="card" id="historico">
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between">
+      <div><p class="eyebrow">Orçamentos enviados</p><p class="sub" style="margin-top:4px;font-size:13px">Guardados só neste navegador: não ficam no site e nenhum cliente vê esta lista.</p></div>
+      <input id="busca" type="search" placeholder="Buscar cliente" aria-label="Buscar cliente" style="max-width:220px">
+    </div>
+    <div id="lista" class="lista"></div>
+    <div class="rapidos">
+      <button type="button" id="exportar">Baixar cópia de segurança</button>
+      <label for="importar" class="btn-arquivo">Restaurar cópia<input id="importar" type="file" accept="application/json" hidden></label>
+    </div>
+    <p class="ok" id="histMsg"></p>
+  </section>
 </main>
 <script>
 (function(){
@@ -118,6 +143,13 @@ Contrato de 6 meses · 2 primeiros de experiência</textarea></label>
   function codificar(obj){ var bytes = new TextEncoder().encode(JSON.stringify(obj)), bin = ''; for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]); return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
   function iso(d){ return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
   function dataBR(s){ var p = s.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
+  var PADRAO = { pl: 'Social · Plano mensal', pe: 'por mês',
+    it: ['8 a 12 posts por mês + stories do calendário','1 diária de captação por mês','Direct respondido em até 24h úteis','Reunião mensal com relatório de resultados','Onboarding de 30 dias incluso no mês 01'],
+    co: ['Pagamento mensal por PIX ou boleto','Vencimento todo dia 10','Contrato de 6 meses · 2 primeiros de experiência'] };
+  var CAMPOS = ['c','pl','it','v','pe','co','o','val','em'];
+  function canon(get){ return CAMPOS.map(function(k){ return get(k) || ''; }).join('\u0001'); }
+  function isoDe(s){ return /^\d{8}$/.test(s || '') ? s.slice(0,4) + '-' + s.slice(4,6) + '-' + s.slice(6) : (s || ''); }
+  function moeda(v){ return /^\d+(\.\d{1,2})?$/.test(v) ? Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }).replace(/\u00a0/g, ' ') : v; }
   var $ = function(id){ return document.getElementById(id); };
   var linhas = function(id){ return $(id).value.split('\n').map(function(x){ return x.trim(); }).filter(Boolean); };
 
@@ -134,15 +166,71 @@ Contrato de 6 meses · 2 primeiros de experiência</textarea></label>
     if (!c || !v || !val){ $('erro').textContent = 'Preencha o cliente, o valor e a validade.'; return; }
     if (val < iso(new Date())){ $('erro').textContent = 'A validade precisa ser hoje ou uma data futura.'; return; }
     $('erro').textContent = '';
-    var dados = { c: c, pl: $('plano').value.trim(), it: linhas('itens'), v: v, pe: $('periodo').value.trim(), co: linhas('condicoes'), o: $('obs').value.trim(), val: val, em: iso(new Date()) };
-    var p = codificar(dados);
-    var orc = base + 'orcamento.html?p=' + p + '&k=' + hash(SAL + p);
+    // Link curto: só vai o que muda; o que for igual ao padrão fica na página.
+    var num = v.replace(/[^\d,.]/g, '').replace(/\./g, '').replace(',', '.');
+    var it = linhas('itens').join('|'), co = linhas('condicoes').join('|');
+    var dados = { c: c, v: /^\d+(\.\d{1,2})?$/.test(num) ? String(Number(num)) : v,
+      pl: $('plano').value.trim() === PADRAO.pl ? '' : $('plano').value.trim(),
+      pe: $('periodo').value.trim() === PADRAO.pe ? '' : $('periodo').value.trim(),
+      it: it === PADRAO.it.join('|') ? '' : it, co: co === PADRAO.co.join('|') ? '' : co,
+      o: $('obs').value.trim().replace(/\s*\n\s*/g, ' · '), val: val.replace(/-/g, ''), em: iso(new Date()).replace(/-/g, '') };
+    var qs = new URLSearchParams();
+    CAMPOS.forEach(function(x){ if (dados[x]) qs.set(x, dados[x]); });
+    qs.set('k', hash(SAL + canon(function(x){ return dados[x]; })));
+    var orc = base + 'orcamento.html?' + qs.toString();
     var prop = base + 'index.html?para=' + encodeURIComponent(c);
     $('linkOrc').value = orc; $('abrirOrc').href = orc;
     $('linkProp').value = prop; $('abrirProp').href = prop;
     $('saida').hidden = false; $('copiado').textContent = '';
+    guardar({ id: Date.now().toString(36), cliente: c, valor: dados.v, validade: val, emitido: iso(new Date()), link: orc, proposta: prop });
     $('saida').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
+
+  // Histórico: só neste navegador (localStorage). Nada vai para o site.
+  var CHAVE = 'take3.orcamentos.v1';
+  function ler(){ try { var x = JSON.parse(localStorage.getItem(CHAVE) || '[]'); return Array.isArray(x) ? x : []; } catch (e) { return []; } }
+  function gravar(xs){ try { localStorage.setItem(CHAVE, JSON.stringify(xs)); return true; } catch (e) { $('histMsg').textContent = 'Este navegador não deixou guardar o histórico (aba anônima?). Copie o link antes de sair.'; return false; } }
+  function guardar(o){ var xs = ler(); xs.unshift(o); gravar(xs.slice(0, 500)); render(); }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function copiar(texto, msg){ var ok = function(){ $('histMsg').textContent = msg; }; if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(texto).then(ok, function(){ prompt('Copie o link:', texto); }); else prompt('Copie o link:', texto); }
+  function render(){
+    var termo = ($('busca').value || '').toLowerCase(), hoje = iso(new Date());
+    var xs = ler().filter(function(o){ return !termo || o.cliente.toLowerCase().indexOf(termo) >= 0; });
+    if (!xs.length){ $('lista').innerHTML = '<p class="vazio">' + (termo ? 'Nenhum orçamento para essa busca.' : 'Os orçamentos que você gerar aparecem aqui.') + '</p>'; return; }
+    $('lista').innerHTML = xs.map(function(o){
+      var exp = o.validade < hoje;
+      return '<div class="item"><div><b>' + esc(o.cliente) + '</b><div class="meta">' + esc(/^\d/.test(o.valor) ? Number(o.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : o.valor) + ' · emitido ' + dataBR(o.emitido) + ' · válido até ' + dataBR(o.validade) + '</div></div>' +
+        '<span class="status ' + (exp ? 'expirado' : 'valido') + '">' + (exp ? 'Expirado' : 'Válido') + '</span>' +
+        '<div class="acts"><button type="button" data-acao="copiar" data-id="' + o.id + '">Copiar orçamento</button><button type="button" data-acao="prop" data-id="' + o.id + '">Copiar apresentação</button><a href="' + esc(o.link) + '" target="_blank" rel="noopener">Abrir</a><button type="button" data-acao="excluir" data-id="' + o.id + '">Excluir</button></div></div>';
+    }).join('');
+  }
+  $('lista').addEventListener('click', function(e){
+    var b = e.target.closest('[data-acao]'); if (!b) return;
+    var xs = ler(), o = xs.filter(function(x){ return x.id === b.dataset.id; })[0]; if (!o) return;
+    if (b.dataset.acao === 'copiar') copiar(o.link, 'Link do orçamento de ' + o.cliente + ' copiado.');
+    else if (b.dataset.acao === 'prop') copiar(o.proposta, 'Link da apresentação de ' + o.cliente + ' copiado.');
+    else if (b.dataset.acao === 'excluir'){
+      if (b.dataset.confirmar !== '1'){ b.dataset.confirmar = '1'; b.textContent = 'Confirmar exclusão'; return; }
+      gravar(xs.filter(function(x){ return x.id !== o.id; })); render(); $('histMsg').textContent = 'Removido do histórico. O link enviado continua valendo até a validade.';
+    }
+  });
+  $('busca').addEventListener('input', render);
+  $('exportar').addEventListener('click', function(){
+    var blob = new Blob([JSON.stringify(ler(), null, 2)], { type: 'application/json' });
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'orcamentos-take3-' + iso(new Date()) + '.json'; document.body.appendChild(a); a.click(); a.remove();
+    $('histMsg').textContent = 'Cópia baixada. Guarde em local seguro: ela tem os orçamentos de todos os clientes.';
+  });
+  $('importar').addEventListener('change', function(){
+    var f = this.files && this.files[0]; if (!f) return;
+    f.text().then(function(t){
+      var novos = JSON.parse(t); if (!Array.isArray(novos)) throw new Error('formato');
+      var atuais = ler(), ids = {}; atuais.forEach(function(o){ ids[o.id] = 1; });
+      gravar(novos.filter(function(o){ return o && o.id && o.cliente && o.link && !ids[o.id]; }).concat(atuais).sort(function(a, b){ return a.emitido < b.emitido ? 1 : -1; }));
+      render(); $('histMsg').textContent = 'Cópia restaurada.';
+    }).catch(function(){ $('histMsg').textContent = 'Esse arquivo não é uma cópia do histórico de orçamentos.'; });
+    this.value = '';
+  });
+  render();
 
   document.querySelectorAll('[data-copiar]').forEach(function(b){
     b.addEventListener('click', function(){
