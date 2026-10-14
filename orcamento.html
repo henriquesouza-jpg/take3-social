@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <title>Orçamento Take3 Digital</title>
+<script src="portfolio.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap">
 <style>
@@ -53,6 +54,10 @@ footer{color:var(--dim);font-size:12.5px;letter-spacing:.06em;display:flex;flex-
 .aviso{text-align:center;padding:48px 24px}
 .aviso h1{font-size:clamp(28px,6vw,42px)}
 .aviso p{color:var(--muted);font-size:17px;line-height:1.6;max-width:520px;margin:14px auto 0}
+.ig{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:12px}
+.ig a{display:grid;gap:4px;text-decoration:none;color:var(--fg);border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:rgba(0,0,0,.12)}
+.ig a:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
+.ig b{font-size:16px}.ig span{color:var(--muted);font-size:14px;line-height:1.4}.ig em{font-style:normal;color:var(--orange);font-weight:600;font-size:13px}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -112,6 +117,8 @@ footer{color:var(--dim);font-size:12.5px;letter-spacing:.06em;display:flex;flex-
       '</div>' +
       (d.o ? '<section class="card"><p class="tag" style="color:var(--yellow)">Observações</p><p class="obs">' + esc(d.o) + '</p></section>' : '');
   }
+  var ig = (window.PORTFOLIO || []).filter(function(x){ return x && /^https:\/\//.test(x.url || ''); });
+  if (ig.length) html += '<section class="card"><p class="tag">Conheça nosso trabalho</p><div class="ig">' + ig.map(function(x){ return '<a href="' + esc(x.url) + '" target="_blank" rel="noopener"><b>' + esc(x.nome) + '</b>' + (x.desc ? '<span>' + esc(x.desc) + '</span>' : '') + '<em>Ver no Instagram →</em></a>'; }).join('') + '</div></section>';
   html += '<div class="acoes"><a class="btn ghost" href="' + esc(proposta) + '">Ver a apresentação do Social</a></div>' +
     '<footer><span>Take3 Digital · Social media para restaurantes</span><span>Emitido em ' + dataBR(d.em) + '</span></footer>';
   document.getElementById('carregando').outerHTML = html;

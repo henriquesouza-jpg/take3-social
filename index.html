@@ -1,4 +1,4 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>Take3 Digital · Social</title></head><body>
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>Take3 Digital · Social</title><script src="portfolio.js"></script></head><body>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500;1,600&display=swap">
 <style>
 /* Layout: 1600x900 stage scaled to viewport. Single dark look from the Take3 reference deck: deep teal ground, orange + yellow accents, orange→yellow gradient for the one key element per screen. */
@@ -203,6 +203,15 @@ h1{font-size:88px}h2{font-size:68px}
 .retrato .photo.sede{width:100%!important;max-width:100%!important}
 .retrato .photo.sede img{width:100%;height:auto}
 .retrato .banner{font-size:22px;padding:22px 26px}
+.ig{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;margin-top:40px}
+.ig a{display:grid;gap:8px;text-decoration:none;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:24px 26px;transition:transform .25s,border-color .25s}
+.ig a:hover{transform:translateY(-3px);border-color:var(--orange)}
+.ig .h{display:flex;align-items:center;gap:12px;font-weight:700;font-size:22px}
+.ig .h i{width:40px;height:40px;border-radius:12px;background:var(--grad);display:grid;place-items:center;flex:none}
+.ig .h i svg{width:22px;height:22px}
+.ig p{margin:0;color:var(--muted);font-size:17px;line-height:1.5}
+.ig .v{color:var(--orange);font-weight:600;font-size:15px}
+.retrato .ig{grid-template-columns:1fr;margin-top:26px}
 [data-edit]{outline:none;border-bottom:2px dashed transparent;cursor:text;border-radius:2px;transition:border-color .2s}
 [data-edit]:hover,[data-edit]:focus{border-bottom-color:currentColor}
 .orc-lista{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:12px}
@@ -639,6 +648,16 @@ const deck = {
       <div class="cols c2 grow" style="gap:18px">${D.condicoes.itens.map((c,j)=>`<div class="card a" style="--i:${2+j};padding:26px 28px"><div class="tag" style="font-size:13px">${c[0]}</div><p style="font-size:18px;line-height:1.6;margin-top:10px">${c[1]}</p></div>`).join('')}</div>
       <div class="card a" style="--i:6;padding:26px 28px;width:420px;flex:none"><div class="tag" style="font-size:13px;color:var(--yellow)">Fora do plano mensal</div><p style="font-size:18px;line-height:1.8;margin-top:10px;color:var(--muted)">${D.condicoes.fora.map(x=>'· '+x).join('<br>')}</p></div>
     </div>`});
+
+  // nosso trabalho no Instagram (só aparece com links em portfolio.js)
+  const IG = (window.PORTFOLIO || []).filter(x => x && /^https:\/\//.test(x.url || ''));
+  const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const icone = '<svg viewBox="0 0 24 24" fill="none" stroke="#032a34" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="#032a34"/></svg>';
+  if (IG.length) add({id:'instagram', path:'Nosso trabalho', footL:'Take3 Digital · Nosso trabalho no Instagram', footR:'', html:`
+    <p class="eyebrow a" style="--i:0">Portfólio</p>
+    <h2 class="a" style="--i:1;font-size:80px">Nosso trabalho <span class="o">no Instagram.</span></h2>
+    <p class="lead a" style="--i:2;margin-top:12px">Toque em um perfil para ver o conteúdo que produzimos.</p>
+    <div class="ig">${IG.map((x,j)=>`<a class="a" style="--i:${3+j}" href="${esc(x.url)}" target="_blank" rel="noopener"><span class="h"><i>${icone}</i>${esc(x.nome)}</span>${x.desc?`<p>${esc(x.desc)}</p>`:''}<span class="v">Ver no Instagram →</span></a>`).join('')}</div>`});
 
   // 17 próximos passos
   add({id:'proximos', path:'Próximos passos', footL:'Próximos passos · Confidencial', footR:'', html:`
