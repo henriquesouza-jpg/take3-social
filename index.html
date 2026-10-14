@@ -1,0 +1,768 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>Take3 Digital · Social</title></head><body>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500;1,600&display=swap">
+<style>
+/* Layout: 1600x900 stage scaled to viewport. Single dark look from the Take3 reference deck: deep teal ground, orange + yellow accents, orange→yellow gradient for the one key element per screen. */
+:root{
+  --bg:#043a47; --bg2:#054250; --panel:#0a4c5b; --panel2:#0d5666;
+  --fg:#f1f3ee; --muted:#b9cdd1; --dim:#7fa3aa; --line:rgba(241,243,238,.14); --line2:rgba(241,243,238,.28);
+  --orange:#ff6700; --orange2:#ff8a1f; --yellow:#fdbd10; --red:#ff0808;
+  --grad:linear-gradient(135deg,#ff6700 0%,#fdbd10 100%);
+  --grad2:linear-gradient(135deg,#ff0808 0%,#ff6700 50%,#fdbd10 100%);
+  --ink:#032a34;
+  --font:'Poppins','Segoe UI',Arial,sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);overflow:hidden;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+img{max-width:100%}
+#bg{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0}
+#wrap{position:fixed;inset:0;display:grid;place-items:center;z-index:1;padding-inline:16px;padding-block:0}
+#stage{width:1600px;height:900px;position:relative;transform-origin:center;overflow:hidden;border-radius:16px;background:var(--bg);box-shadow:0 30px 80px rgba(0,0,0,.45)}
+.slide{position:absolute;inset:0;padding:84px 96px 72px;display:flex;flex-direction:column;opacity:0;visibility:hidden;pointer-events:none;background:var(--bg)}
+.slide.grad{background:linear-gradient(135deg,#fdbd10 0%,#ff6700 48%,#ff0808 100%);color:var(--ink)}
+.slide.on{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .5s ease}
+.slide.out{opacity:0;visibility:visible;transform:scale(.985);transition:opacity .4s ease,transform .4s ease}
+.squircle{position:absolute;border:1.5px solid rgba(241,243,238,.14);border-radius:28%;pointer-events:none}
+.sphere{position:absolute;border-radius:50%;background:linear-gradient(135deg,#ff0808 0%,#ff6700 50%,#fdbd10 100%);box-shadow:0 40px 90px rgba(255,103,0,.35);animation:spin 14s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.glow{position:absolute;border-radius:50%;filter:blur(90px);opacity:.35;pointer-events:none}
+
+/* chrome */
+.top{position:absolute;left:96px;right:96px;top:30px;display:flex;align-items:center;justify-content:space-between;font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--dim);font-weight:600}
+.top .cur{color:var(--orange)}
+.grad .top{color:rgba(3,42,52,.6)}.grad .top .cur{color:var(--ink)}
+.foot{position:absolute;left:96px;right:96px;bottom:28px;display:flex;justify-content:space-between;font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--dim);font-weight:500}
+.grad .foot{color:rgba(3,42,52,.7)}
+#progress{position:absolute;left:0;top:0;height:4px;background:var(--grad);width:0;transition:width .5s cubic-bezier(.2,.8,.2,1);z-index:5;box-shadow:0 0 16px rgba(255,103,0,.7)}
+#count{position:absolute;right:96px;top:28px;font-weight:600;font-size:12px;letter-spacing:.2em;z-index:4;font-variant-numeric:tabular-nums;color:var(--dim)}
+#count.dk{color:rgba(3,42,52,.7)}
+#nav{position:fixed;right:22px;bottom:22px;display:flex;gap:8px;z-index:6}
+#nav button,#menuBtn{width:46px;height:46px;border-radius:50%;border:1px solid var(--line2);background:var(--panel);color:var(--fg);font-size:20px;cursor:pointer;transition:transform .2s,background .2s;font-family:var(--font);font-weight:700}
+#nav button:hover,#menuBtn:hover{transform:translateY(-2px);background:var(--panel2)}
+#nav button:focus-visible,#menuBtn:focus-visible,.pillar:focus-visible,.x li:focus-visible,.chip:focus-visible,.cta:focus-visible,#menu button:focus-visible,.card[tabindex]:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+#menuBtn{position:fixed;left:22px;bottom:22px;z-index:6;font-size:16px}
+#menu[hidden]{display:none}
+#menu{position:fixed;left:22px;bottom:80px;z-index:7;background:var(--panel);border:1px solid var(--line2);border-radius:16px;padding:10px;display:grid;gap:2px;max-height:70vh;overflow:auto;min-width:270px}
+#menu button{border:0;background:none;text-align:left;padding:8px 12px;border-radius:8px;cursor:pointer;font-family:var(--font);font-size:13px;color:var(--fg);display:flex;gap:10px;align-items:center}
+#menu button:hover{background:var(--panel2)}
+#menu button.cur{background:var(--orange);color:var(--ink)}
+#menu button i{font-style:normal;font-weight:700;font-size:10px;letter-spacing:.1em;color:var(--dim);width:22px}
+#menu button.cur i{color:var(--ink)}
+#hint{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);font-size:12px;color:var(--dim);letter-spacing:.1em;z-index:6;transition:opacity .6s}
+#hint.gone{opacity:0}
+
+/* wordmark */
+.wm{font-weight:800;letter-spacing:-.05em;line-height:1;display:inline-block;position:relative;color:var(--fg);padding-right:.26em}
+.wm i{position:absolute;right:0;top:-.02em;width:.2em;height:.2em;border-radius:50%;background:var(--grad2);box-shadow:0 0 .25em rgba(255,103,0,.6);animation:pulse 2.6s ease-in-out infinite}
+.grad .wm{color:var(--ink)}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+.rule{width:150px;height:5px;border-radius:3px;background:var(--grad2)}
+.grad .rule{background:var(--ink)}
+
+/* type */
+.eyebrow{font-size:14px;letter-spacing:.34em;text-transform:uppercase;color:var(--orange);font-weight:700;margin:0 0 18px}
+.eyebrow.y{color:var(--yellow)}
+.grad .eyebrow{color:var(--ink)}
+h1,h2{margin:0;text-wrap:balance;letter-spacing:-.03em;line-height:1.02;font-weight:800}
+h1{font-size:88px}h2{font-size:68px}
+.o{color:var(--orange)}.y{color:var(--yellow)}
+.grad h2{color:var(--ink)}
+.lead{font-size:23px;line-height:1.5;color:var(--muted);max-width:820px;margin:20px 0 0;font-weight:400}
+.lead b{color:var(--fg);font-weight:600}.lead em{font-style:italic;color:var(--fg)}
+.grad .lead{color:rgba(3,42,52,.8)}.grad .lead b{color:var(--ink)}
+.row{display:flex;gap:24px}.grow{flex:1;min-width:0}
+.cols{display:grid;gap:22px}.c2{grid-template-columns:1fr 1fr}.c3{grid-template-columns:repeat(3,1fr)}.c4{grid-template-columns:repeat(4,1fr)}.c5{grid-template-columns:repeat(5,1fr)}
+.mt{margin-top:auto}
+.tagline{font-size:15px;letter-spacing:.3em;text-transform:uppercase;color:var(--orange);font-weight:700}
+.cover-client{font-weight:800;font-size:36px;letter-spacing:.02em;color:var(--yellow);padding:4px 14px;border-radius:10px;outline:none;cursor:text;min-width:260px;border:1.5px dashed transparent;transition:border-color .3s}
+.cover-client{cursor:default}
+.edit-hint{margin-top:10px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);transition:opacity .3s}
+.cover-client:not(:focus):not(:hover)~.edit-hint{opacity:0}
+.ag{display:grid;grid-template-columns:46px 1fr 24px;align-items:center;gap:18px;padding:16px 22px;border:1px solid var(--line2);border-radius:16px;background:transparent;color:inherit;font-family:inherit;text-align:left;cursor:pointer;min-width:0;transition:transform .25s,border-color .25s,background .25s}
+.ag:hover{transform:translateY(-3px);border-color:var(--orange);background:var(--panel)}
+.ag .n{width:44px;height:44px;border-radius:50%;background:var(--orange);color:var(--ink);display:grid;place-items:center;font-weight:800;font-size:15px}
+.ag .tx{min-width:0}.ag b{display:block;font-size:22px;font-weight:700;letter-spacing:-.01em}
+.ag small{display:block;font-size:15px;color:var(--muted);margin-top:3px;line-height:1.4}
+.ag i{font-style:normal;color:var(--orange);font-size:20px;text-align:right}
+.mission{font-weight:700;font-size:34px;color:var(--yellow);letter-spacing:-.01em}
+.mission em{font-style:normal;color:var(--yellow)}
+
+/* cards */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:26px 28px;position:relative;min-width:0;transition:transform .25s,border-color .25s,background .25s;text-align:left;font-family:inherit;color:inherit;overflow:hidden}
+.card.topline::before{content:"";position:absolute;left:0;top:0;right:0;height:5px;background:var(--orange)}
+.card.lift{cursor:pointer}
+.card.lift:hover{transform:translateY(-4px);border-color:var(--line2);background:var(--panel2)}
+.card.outline{background:transparent;border-color:var(--line2)}
+.card.hot{background:var(--grad);color:var(--ink);border-color:transparent}
+.card.hot p,.card.hot .tag,.card.hot h3,.card.hot .num,.card.hot .more{color:var(--ink)}
+.card.hot .tag{color:#4a1e00}
+.card .num{font-weight:400;font-size:42px;color:var(--orange);line-height:1}
+.card h3{font-weight:700;font-size:19px;letter-spacing:.06em;text-transform:uppercase;margin:12px 0 8px;color:var(--fg)}
+.card h3.n{text-transform:none;letter-spacing:-.01em;font-size:26px}
+.card p{margin:0;color:var(--muted);font-size:16px;line-height:1.5}
+.card p.o{color:var(--orange);font-style:italic}
+.card .tag{font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--orange);font-weight:700}
+.card .more{font-size:14px;line-height:1.5;color:var(--muted);max-height:0;overflow:hidden;transition:max-height .4s ease,margin .4s,padding .4s;margin:0;border-top:1px solid transparent}
+.card.open .more{max-height:170px;margin-top:12px;padding-top:10px;border-top-color:var(--line)}
+.card.hot.open .more{border-top-color:rgba(3,42,52,.25)}
+.card .hintc{position:absolute;right:16px;top:16px;width:26px;height:26px;border-radius:50%;background:rgba(241,243,238,.1);display:grid;place-items:center;font-weight:700;font-size:15px;color:var(--yellow);transition:transform .3s}
+.card.hot .hintc{background:rgba(3,42,52,.15);color:var(--ink)}
+.card.open .hintc{transform:rotate(45deg)}
+.chip{display:block;border-radius:999px;padding:14px 28px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:17px;background:var(--panel);border:1px solid var(--line2);transition:transform .2s,background .2s,border-color .2s;cursor:pointer;position:relative;text-align:left;width:100%;color:var(--fg);font-family:inherit}
+.chip small{display:block;font-weight:400;letter-spacing:0;text-transform:none;font-size:14px;color:var(--muted);margin-top:2px}
+.chip em{display:block;font-style:normal;font-weight:400;letter-spacing:0;text-transform:none;font-size:14px;line-height:1.5;max-height:0;overflow:hidden;transition:max-height .4s ease,margin .4s,padding .4s}
+.chip.on{background:var(--orange);color:var(--ink);border-color:transparent;border-radius:28px}
+.chip.on small{color:#4a1e00}
+.chip.on em{max-height:130px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(3,42,52,.25);color:var(--ink)}
+.chip::after{content:"+";position:absolute;right:22px;top:14px;font-size:20px;color:var(--dim);transition:transform .3s}
+.chip.on::after{transform:rotate(45deg);color:var(--ink)}
+.chip:hover{transform:translateX(6px)}
+.x{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.x li{border-radius:12px;padding:12px 16px 12px 40px;position:relative;cursor:pointer;border:1px solid transparent;transition:background .2s,border-color .2s}
+.x li:hover,.x li.open{background:rgba(241,243,238,.05);border-color:var(--line)}
+.x li b{display:block;font-weight:700;font-size:18px;letter-spacing:-.01em;color:var(--fg)}
+.x li span{display:block;color:var(--muted);font-size:15px;line-height:1.5;max-height:0;overflow:hidden;transition:max-height .35s ease,margin .35s}
+.x li.open span{max-height:120px;margin-top:4px}
+.x li::before{content:"→";position:absolute;left:12px;top:11px;color:var(--orange);font-weight:600;transition:transform .3s}
+.x li.open::before{transform:translateX(4px);color:var(--yellow)}
+.x li::after{content:"+";position:absolute;right:14px;top:10px;font-weight:700;color:var(--dim);transition:transform .3s}
+.x li.open::after{transform:rotate(45deg)}
+.stat{display:grid;gap:2px}
+.stat .v{font-weight:800;font-size:76px;line-height:1;letter-spacing:-.04em;font-variant-numeric:tabular-nums;color:var(--fg)}
+.stat .v.o{color:var(--orange)}.stat .v.y{color:var(--yellow)}
+.stat .v.thin{font-weight:400}
+.stat .l{font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--orange);font-weight:700;margin-bottom:6px}
+.stat .d{color:var(--muted);font-size:17px}
+.cta{display:inline-flex;align-items:center;gap:12px;background:var(--grad);color:var(--ink);font-weight:700;letter-spacing:.16em;text-transform:uppercase;padding:16px 30px;border-radius:999px;font-size:14px;border:0;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 10px 26px rgba(255,103,0,.3);font-family:inherit}
+.cta:hover{transform:translateY(-2px);box-shadow:0 16px 32px rgba(255,103,0,.4)}
+.cta.ghost{background:transparent;color:var(--orange);border:2px solid var(--orange);box-shadow:none}
+.grad .cta.ghost{color:var(--ink);border-color:var(--ink)}
+
+/* overview diagram */
+.diagram{position:relative;height:400px;margin-top:6px}
+.diagram svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.diagram svg path{stroke:var(--orange);stroke-width:2.5;fill:none;opacity:.5;stroke-dasharray:7 7;animation:dash 28s linear infinite}
+.diagram svg circle{fill:var(--orange)}
+.diagram svg .spark{fill:var(--yellow);filter:drop-shadow(0 0 6px rgba(253,189,16,.9))}
+@keyframes dash{to{stroke-dashoffset:-700}}
+.pillar{position:absolute;width:300px;background:var(--panel);border:1px solid var(--line);border-top:5px solid var(--orange);border-radius:18px;padding:20px 24px;cursor:pointer;transition:transform .25s,background .25s;text-align:left;font-family:inherit;color:var(--fg)}
+.pillar:hover{transform:translateY(-6px);background:var(--panel2)}
+.pillar .k{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--dim);font-weight:700}
+.pillar h3{font-weight:700;font-size:22px;margin:8px 0 6px;letter-spacing:-.02em;text-transform:uppercase;font-size:18px;letter-spacing:.06em}
+.pillar p{margin:0;color:var(--muted);font-size:14px;line-height:1.45}
+.pillar .go{position:absolute;right:18px;top:16px;width:30px;height:30px;border-radius:50%;background:rgba(241,243,238,.08);display:grid;place-items:center;font-weight:700;color:var(--yellow);transition:background .2s,color .2s}
+.pillar:hover .go{background:var(--grad);color:var(--ink)}
+.pillar.key{background:var(--grad);color:var(--ink);border-top-color:transparent}
+.pillar.key .k,.pillar.key p{color:#4a1e00}.pillar.key .go{background:rgba(3,42,52,.15);color:var(--ink)}
+.hub{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:160px;height:160px;border-radius:50%;background:var(--panel2);border:2px solid var(--orange);color:var(--fg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;font-weight:700;font-size:12px;letter-spacing:.2em;text-transform:uppercase;box-shadow:0 0 0 16px rgba(255,103,0,.08),0 0 0 32px rgba(255,103,0,.04);z-index:2}
+.hub b{font-size:50px;letter-spacing:-.02em;color:var(--yellow);font-weight:800;line-height:1}
+.flow{display:flex;align-items:center;gap:8px;font-weight:700;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+.flow span{padding:10px 16px;border-radius:999px;border:1px solid var(--line2)}
+.flow span.p{background:var(--orange);color:var(--ink);border-color:transparent}.flow span.h{background:var(--yellow);color:var(--ink);border-color:transparent}
+.flow i{font-style:normal;color:var(--dim)}
+
+/* timeline, table, misc */
+.timeline{display:grid;grid-template-columns:repeat(5,1fr);gap:18px;position:relative;margin-top:50px}
+.timeline::before{content:"";position:absolute;left:10%;right:10%;top:30px;height:3px;background:var(--line2);border-radius:2px}
+.timeline .fill{position:absolute;left:10%;top:30px;height:3px;background:var(--orange);border-radius:2px;width:0;transition:width 1.6s cubic-bezier(.2,.8,.2,1)}
+.on .timeline .fill{width:80%}
+/* ===== modo retrato: celular em pé (palco 900x1600) ===== */
+.retrato #stage{width:620px;height:1100px}
+.retrato .slide{padding:78px 30px 40px;overflow-y:auto;overflow-x:hidden}
+.retrato .foot{left:30px;right:30px;bottom:24px;font-size:11px;letter-spacing:.14em}
+.retrato .slide p,.retrato .slide li,.retrato .slide td,.retrato .slide small{font-size:19px!important;line-height:1.5!important}
+.retrato .card h3,.retrato .card .n{font-size:28px!important}
+.retrato .tag{font-size:13px!important;letter-spacing:.2em}
+.retrato .eyebrow{font-size:13px;letter-spacing:.24em}
+.retrato .card{padding:22px 22px!important}
+.retrato .cols{gap:14px!important}
+.retrato #hint{display:none}
+.retrato .top{left:30px;right:30px;top:26px}
+.retrato .top .cur{display:none}
+.retrato .foot{display:none}
+.retrato h2{font-size:48px!important;line-height:1.04}
+.retrato .lead{font-size:22px!important;max-width:none!important}
+.retrato .cols.c2,.retrato .cols.c3{grid-template-columns:1fr!important}
+.retrato .cols.c4,.retrato .cols.c5{grid-template-columns:1fr!important}
+.retrato .row{flex-direction:column!important;align-items:stretch!important;gap:22px!important}
+.retrato .row>*{width:auto!important;max-width:100%!important;flex:none!important}
+.retrato .card{width:auto!important;min-height:0!important}
+.retrato .mt{margin-top:28px!important}
+.retrato table{font-size:17px}
+.retrato .timeline,.retrato .timeline.seis{grid-template-columns:1fr!important;gap:22px!important;margin-top:34px}
+.retrato .timeline::before,.retrato .timeline .fill{display:none}
+.retrato .timeline .step{display:grid;grid-template-columns:62px 1fr;column-gap:22px;text-align:left;align-items:start}
+.retrato .timeline .dot{margin:0;grid-row:1 / span 3}
+.retrato .timeline h3{font-size:24px!important;margin:2px 0 4px}
+.retrato .timeline p{font-size:17px!important}
+.retrato .photo.sede{width:100%!important;max-width:100%!important}
+.retrato .photo.sede img{width:100%;height:auto}
+.retrato .banner{font-size:22px;padding:22px 26px}
+[data-edit]{outline:none;border-bottom:2px dashed transparent;cursor:text;border-radius:2px;transition:border-color .2s}
+[data-edit]:hover,[data-edit]:focus{border-bottom-color:currentColor}
+.orc-lista{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:12px}
+.orc-lista li{display:flex;gap:12px;align-items:baseline;font-size:20px;line-height:1.45}
+.orc-lista li::before{content:"→";color:var(--orange);font-weight:700;flex:none}
+.card.hot .orc-lista li::before{color:var(--ink)}
+.timeline.seis{grid-template-columns:repeat(6,1fr);gap:14px}.timeline.seis::before,.timeline.seis .fill{left:8.33%}.timeline.seis::before{right:8.33%}.on .timeline.seis .fill{width:83.34%}.timeline.seis h3{font-size:21px}.timeline.seis p{font-size:14.5px}
+.timeline .step{text-align:center;position:relative}
+.timeline .dot{width:62px;height:62px;border-radius:50%;background:var(--orange);display:grid;place-items:center;margin:0 auto 18px;font-weight:800;font-size:20px;color:var(--ink);position:relative;z-index:1}
+.timeline .step.star .dot{background:var(--fg);color:var(--ink);box-shadow:0 0 0 10px rgba(241,243,238,.1)}
+.timeline .m{font-size:12px;letter-spacing:.3em;color:var(--orange);font-weight:700;text-transform:uppercase}
+.timeline h3{font-size:23px;font-weight:700;margin:6px 0 8px;letter-spacing:-.02em}
+.timeline p{margin:0;color:var(--muted);font-size:15px;line-height:1.45}
+table{width:100%;border-collapse:collapse;font-size:19px}
+th{font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--orange);text-align:left;padding:14px 22px;background:rgba(0,0,0,.25);font-weight:700}
+td{padding:16px 22px;border-top:1px solid var(--line);color:var(--fg)}
+td:nth-child(3){color:var(--muted)}
+.banner{border-radius:20px;background:var(--grad);color:var(--ink);padding:22px 40px;text-align:center;font-weight:700;font-size:25px;letter-spacing:-.01em}
+.banner small{display:block;font-size:13px;letter-spacing:.34em;text-transform:uppercase;margin-bottom:4px;font-weight:700}
+.contact{display:flex;justify-content:space-between;align-items:center;border-radius:22px;padding:20px 20px 20px 34px;border:1.5px solid var(--orange)}
+.contact .t{font-size:14px;letter-spacing:.3em;text-transform:uppercase;color:var(--orange);font-weight:700}
+.contact .v{font-weight:600;font-size:18px;margin-top:4px;user-select:all;color:var(--muted)}
+.photo{border-radius:18px;overflow:hidden;position:relative;background:var(--panel)}
+.photo img{width:100%;height:100%;object-fit:cover;display:block}
+.photo .cap{position:absolute;left:14px;bottom:14px;background:rgba(4,58,71,.85);color:#fff;font-weight:700;font-size:10px;letter-spacing:.26em;text-transform:uppercase;padding:8px 12px;border-radius:999px;backdrop-filter:blur(4px)}
+.photo .cap.hot{background:var(--grad);color:var(--ink)}
+.sede{width:520px;height:640px;align-self:center}
+.client{border-radius:18px;padding:18px 22px;background:var(--panel);border:1px solid var(--line2);display:grid;grid-template-columns:110px 1fr;gap:22px;align-items:center}
+.client .lg{width:110px;height:110px;border-radius:14px;overflow:hidden;background:var(--panel2)}
+.client .lg img{width:100%;height:100%;object-fit:cover;display:block}
+.client .f{font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--dim);font-weight:500}
+.client .n{font-weight:700;font-size:22px;margin:2px 0 8px;letter-spacing:-.01em}
+.client .n.y{color:var(--yellow);margin:0}
+.quote{font-size:21px;line-height:1.5;color:var(--fg);font-style:italic;max-width:640px;margin:22px 0 0;border-left:3px solid var(--orange);padding-left:22px}
+.quote small{display:block;font-style:normal;font-size:14px;letter-spacing:.3em;text-transform:uppercase;margin-top:10px;color:var(--muted);font-weight:600}
+.shots{display:grid;gap:12px}
+.shots .photo{height:280px}
+.case-panel{position:relative;width:600px;align-self:stretch;min-width:0}
+.case-face{position:absolute;inset:0;display:grid;gap:14px;align-content:start;transition:opacity .45s,transform .45s}
+.case-face.back{opacity:0;transform:translateX(40px);pointer-events:none}
+.case-panel.flipped .case-face.front{opacity:0;transform:translateX(-40px);pointer-events:none}
+.case-panel.flipped .case-face.back{opacity:1;transform:none;pointer-events:auto}
+.steps{display:grid;gap:10px}
+.steps .s{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start;padding:14px 16px;border-radius:14px;background:var(--panel);border:1px solid var(--line);opacity:0;transform:translateY(14px);transition:opacity .5s,transform .5s}
+.flipped .steps .s{opacity:1;transform:none}
+.flipped .steps .s:nth-child(1){transition-delay:.1s}.flipped .steps .s:nth-child(2){transition-delay:.3s}.flipped .steps .s:nth-child(3){transition-delay:.5s}.flipped .steps .s:nth-child(4){transition-delay:.7s}
+.steps .s i{font-style:normal;width:44px;height:44px;border-radius:50%;background:var(--orange);color:var(--ink);display:grid;place-items:center;font-weight:700;font-size:13px}
+.steps .s:last-child i{background:var(--yellow)}
+.steps .s b{display:block;font-weight:700;font-size:12px;letter-spacing:.26em;text-transform:uppercase;color:var(--orange);margin-bottom:4px}
+.steps .s p{margin:0;font-size:15px;line-height:1.5;color:var(--muted)}
+.bars{display:grid;gap:10px}
+.bar{display:grid;grid-template-columns:160px 1fr 110px;align-items:center;gap:12px;font-size:14px;color:var(--muted)}
+.bar .t{width:100%;height:14px;background:rgba(0,0,0,.3);border-radius:8px;overflow:hidden}
+.bar .f{height:100%;width:0;background:var(--orange);border-radius:8px;transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+.bar.hot .f{background:var(--grad)}
+.bar .n{font-weight:700;color:var(--fg);text-align:right;font-variant-numeric:tabular-nums}
+.funnel{display:grid;gap:10px;justify-items:center}
+.funnel div{font-weight:700;letter-spacing:.22em;text-transform:uppercase;padding:14px;text-align:center;color:var(--ink);border-radius:8px;font-size:16px}
+.funnel div:nth-child(1){width:100%;background:var(--fg)}
+.funnel div:nth-child(2){width:88%;background:var(--yellow)}
+.funnel div:nth-child(3){width:76%;background:var(--orange)}
+.funnel div:nth-child(4){width:64%;background:#b3001b;color:#fff}
+.outline-word{position:absolute;right:70px;top:96px;font-weight:800;font-size:210px;line-height:1;color:transparent;-webkit-text-stroke:2px rgba(3,42,52,.35);letter-spacing:-.04em;pointer-events:none}
+
+/* ===== cena 4 pilares (slide 3): estado inicial = título + frase; estados cumulativos st 1 a 11 ===== */
+.sc{position:absolute;inset:0}
+.sc .eyebrow{position:absolute;left:96px;top:84px;margin:0}
+.sc h2{position:absolute;left:96px;top:116px;line-height:1.05}
+.sc .msg{position:absolute;left:96px;top:238px;width:1000px;height:40px;font-size:22px;color:var(--muted);line-height:1.4}
+.sc .msg b{color:var(--fg);font-weight:600}
+.msg>span{position:absolute;left:0;top:0;opacity:0;transform:translateY(8px);transition:opacity .6s,transform .6s}
+.msg>.m1,.st-5 .m6,.st-6 .m8,.st-10 .m11{opacity:1;transform:none}
+.st-5 .m1,.st-6 .m6,.st-10 .m8{opacity:0;transform:translateY(-6px)}
+/* estrutura */
+.sc .struct{position:absolute;left:96px;top:300px;width:1030px;height:520px}
+.sc .ground{position:absolute;left:40px;right:40px;bottom:0;height:1px;background:linear-gradient(90deg,transparent,var(--line2),transparent);opacity:0;transition:opacity .8s}
+.st-1 .ground{opacity:1}
+.sc .pil{position:absolute;top:218px;width:156px;height:282px;opacity:0;transform:translateY(70px);transition:opacity .7s ease,transform .8s cubic-bezier(.2,.8,.2,1);cursor:pointer}
+.st-1 .p1,.st-2 .p2,.st-3 .p3,.st-4 .p4{opacity:1;transform:none}
+.sc .pbody{position:absolute;inset:0;transform-origin:50% 100%;transition:transform 1s cubic-bezier(.3,.9,.3,1)}
+.sc .pbody .halo{transition:opacity .8s,fill .8s}
+.sc .crack{stroke-dasharray:180;stroke-dashoffset:180;opacity:0;transition:stroke-dashoffset 1.1s ease,opacity .3s}
+.sc .ptxt{position:absolute;left:14px;right:14px;top:30px;text-align:center;color:var(--fg)}
+.sc .pico{width:40px;height:40px;border-radius:50%;border:1.5px solid var(--c);color:var(--c);display:grid;place-items:center;margin:0 auto 12px;background:rgba(3,42,52,.5);box-shadow:0 0 18px color-mix(in srgb,var(--c) 45%,transparent)}
+.sc .ptxt h4{margin:0;font-size:15px;letter-spacing:.14em;text-transform:uppercase;font-weight:700}
+.sc .ptxt p{margin:6px 0 0;font-size:12.5px;line-height:1.4;color:var(--muted);min-height:36px}
+.sc .ptxt ul{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:5px;font-size:12.5px;text-align:left;padding-left:18px}
+.sc .ptxt li{position:relative;padding-left:16px;opacity:0;transform:translateX(-8px);transition:opacity .5s,transform .5s}
+.sc .ptxt li::before{content:"";position:absolute;left:0;top:7px;width:7px;height:7px;border-radius:50%;background:var(--c)}
+.st-1 .p1 li,.st-2 .p2 li,.st-3 .p3 li,.st-4 .p4 li{opacity:1;transform:none}
+.sc .ptxt li:nth-child(1){transition-delay:.5s}.sc .ptxt li:nth-child(2){transition-delay:.7s}.sc .ptxt li:nth-child(3){transition-delay:.9s}
+.sc .pil:hover .pbody{transform:translateY(-4px)}
+/* restaurante */
+.sc .building{position:absolute;left:130px;top:0;width:770px;height:236px;opacity:0;transform:translateY(-140px);transform-origin:92% 100%;transition:opacity .6s,transform .95s cubic-bezier(.25,1.25,.35,1)}
+.sc .building svg{display:block}
+.sc .slab{position:absolute;left:-20px;right:-20px;top:178px;height:18px;border-radius:4px;background:linear-gradient(180deg,#105c6c,#0a4553);border:1px solid rgba(241,243,238,.16);box-shadow:0 18px 40px rgba(0,0,0,.35)}
+.st-5 .building{opacity:1;transform:none;animation:thud .5s .9s ease-out both}
+@keyframes thud{0%{transform:translateY(0)}30%{transform:translateY(5px)}60%{transform:translateY(-2px)}100%{transform:none}}
+.sc .win{fill:url(#gWin);opacity:.92;transition:opacity 1s}
+.sc .lightpool{transition:opacity 1s}
+/* problema: um pilar falha por etapa (6 Aquisição · 7 Conversão · 8 Retenção · 9 Growth + colapso) */
+.st-6 .p1 .c1,.st-7 .p2 .c1,.st-8 .p3 .c1,.st-9 .p4 .c1{opacity:1;stroke-dashoffset:0}
+.st-7 .p1 .c2,.st-8 .p2 .c2,.st-9 .p3 .c2{opacity:1;stroke-dashoffset:0}
+.st-6 .p1 .halo,.st-7 .p2 .halo,.st-8 .p3 .halo,.st-9 .p4 .halo{fill:#ff0808;opacity:.5}
+.st-6 .p1 .pico,.st-7 .p2 .pico,.st-8 .p3 .pico,.st-9 .p4 .pico{border-color:#ff0808;color:#ff6b6b;box-shadow:0 0 18px rgba(255,8,8,.35)}
+.st-6 .building{transform:rotate(.8deg) translateY(1px);animation:none}
+.st-6 .win{opacity:.78}.st-6 .lightpool{opacity:.11}
+.st-7 .building{transform:rotate(1.8deg) translateY(4px)}
+.st-7 .win{opacity:.62}.st-7 .lightpool{opacity:.07}
+.st-8 .building{transform:rotate(3deg) translateY(8px)}
+.st-8 .win{opacity:.45}.st-8 .lightpool{opacity:.03}
+.st-9 .building{transform:rotate(5deg) translateY(16px)}
+.st-9 .win{opacity:.22}.st-9 .lightpool{opacity:0}
+.st-9 .p3 .pbody{transform:rotate(-8deg) translate(-10px,10px)}
+.st-9 .p2 .pbody{transform:translateY(10px) rotate(1.5deg)}
+.st-9 .p1 .pbody,.st-9 .p4 .pbody{transform:translateY(4px)}
+.st-9 .pbody .halo{opacity:.18}
+.st-9 .p4 .halo{fill:#ff0808;opacity:.5}
+/* reconstrução */
+.st-10 .building{transform:none;transition-duration:1.4s}
+.st-10 .win{opacity:.92}.st-10 .lightpool{opacity:.16}
+.st-10 .pil .pbody{transform:none}
+.st-10 .pil .crack{opacity:0;transition:opacity .6s}
+.st-10 .pil .pico{border-color:var(--c);color:var(--c);box-shadow:0 0 18px color-mix(in srgb,var(--c) 45%,transparent)}
+.st-10 .pbody .halo{opacity:.55;fill:var(--c)}
+.st-10 .p1 .halo{transition-delay:.1s}.st-10 .p2 .halo{transition-delay:.4s}.st-10 .p3 .halo{transition-delay:.7s}.st-10 .p4 .halo{transition-delay:1s}
+.st-10 .pil{animation:relight 1s ease both}
+.st-10 .p1{animation-delay:.1s}.st-10 .p2{animation-delay:.4s}.st-10 .p3{animation-delay:.7s}.st-10 .p4{animation-delay:1s}
+@keyframes relight{0%{filter:brightness(.6)}50%{filter:brightness(1.35)}100%{filter:none}}
+.st-11 .pil{animation:none}
+/* painel direito */
+.sc .rp{position:absolute;left:1180px;top:300px;width:324px;opacity:0;transform:translateX(24px);transition:opacity .7s,transform .7s}
+.st-6 .rp{opacity:1;transform:none}
+.sc .rp h3{margin:0;font-size:30px;line-height:1.1;letter-spacing:-.02em;font-weight:800}
+.sc .rp p{margin:10px 0 0;font-size:14.5px;line-height:1.45;color:var(--muted)}
+.sc .rp p.y{color:var(--yellow);font-weight:700;font-size:20px;margin-top:10px}
+.sc .dores{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:6px;font-size:13px;color:var(--fg)}
+.sc .dores li{padding:7px 12px;border:1px solid var(--line2);border-left:3px solid var(--c);border-radius:12px;opacity:0;transform:translateY(8px);transition:opacity .5s,transform .5s}
+.sc .dores b{display:block;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--c);margin-bottom:4px;font-weight:700}
+.sc .dores b em{font-style:normal;color:#ff6b6b;letter-spacing:.1em}
+.sc .dores span{display:inline-flex;align-items:center;gap:7px;margin-right:16px;opacity:0;transform:translateX(-6px);transition:opacity .4s .3s,transform .4s .3s}
+.sc .dores span:nth-of-type(2){transition-delay:.6s}
+.sc .dores i{font-style:normal;width:18px;height:18px;border-radius:50%;background:#ff0808;color:#fff;display:grid;place-items:center;font-weight:800;font-size:11px;flex:none}
+.st-6 .dores .g1,.st-7 .dores .g2,.st-8 .dores .g3,.st-9 .dores .g4{opacity:1;transform:none}
+.st-6 .dores .g1 span,.st-7 .dores .g2 span,.st-8 .dores .g3 span,.st-9 .dores .g4 span{opacity:1;transform:none}
+.sc .h10{opacity:0;transition:opacity .6s .4s;color:var(--fg)}.st-9 .h10{opacity:1}
+.sc .h11,.sc .h12{display:none}
+.st-10 .h7{display:none}.st-10 .h11{display:block}
+.st-11 .h11{display:none}.st-11 .h12{display:block}
+.st-10 .rp,.st-11 .rp{animation:rpin .7s ease both}
+@keyframes rpin{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+.dots{display:inline-flex;gap:5px;align-items:center}
+.dots i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--line2)}
+.dots i.on{background:var(--orange)}
+@media (prefers-reduced-motion:reduce){.sc *{transition-duration:.01s!important;animation:none!important}}
+
+/* entrance */
+.on .a{animation:rise .8s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*.1s + .12s)}
+@keyframes rise{from{opacity:0;transform:translateY(30px);filter:blur(5px)}to{opacity:1;transform:none;filter:none}}
+.on .a.pop{animation-name:pop}@keyframes pop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:none}}
+.on .a.sl{animation-name:sl}@keyframes sl{from{opacity:0;transform:translateX(-50px)}to{opacity:1;transform:none}}
+.on .a.sr{animation-name:sr}@keyframes sr{from{opacity:0;transform:translateX(50px)}to{opacity:1;transform:none}}
+.on .a.gw{animation-name:gw}@keyframes gw{from{opacity:0;transform:scaleX(0);transform-origin:left}to{opacity:1;transform:none}}
+.float{animation:floaty 6s ease-in-out infinite}@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+@media (prefers-reduced-motion:reduce){.on .a,.float,.sphere,.wm i,.diagram svg path{animation:none!important}#progress,.bar .f,.timeline .fill{transition:none}}
+</style>
+
+<canvas id="bg" aria-hidden="true"></canvas>
+<div id="wrap"><div id="stage" aria-live="polite"><div id="progress"></div><div id="count"></div></div></div>
+<button id="menuBtn" aria-label="Menu de slides" aria-expanded="false">☰</button>
+<div id="menu" hidden></div>
+<div id="nav"><button id="prev" aria-label="Slide anterior">‹</button><button id="next" aria-label="Próximo slide">›</button><button id="fs" aria-label="Tela cheia" title="Tela cheia (F)" style="font-size:17px">⛶</button></div>
+<div id="hint">← → ou espaço avança (etapas e slides) · Shift + → pula o slide · ⛶ ou F = tela cheia</div>
+
+<script>
+/* ============ CONTEÚDO (edite aqui; o design é montado a partir deste objeto) ============ */
+const deck = {
+  marca:'Take3 Digital', marcaCurta:'Take3', ano:'2026',
+  cliente:'Seu restaurante',
+  rodape:'Take3 Digital',
+  contato:{ email:'comercial@take3digital.com.br', fone:'(XX) XXXXX-XXXX' },
+
+  capa:{ segmento:'Social media para restaurantes', titulo:'Gestão do Social' },
+
+  quemSomos:{
+    titulo:'Não gravamos vídeos bonitos —', destaque:'construímos deliveries que vendem.',
+    p1:'A <b>Take3 Digital</b> nasceu da união da TAKE3 Filmes com a Elysium: a força do audiovisual somada à estratégia de marketing para restaurantes. Há 3 anos em Uberlândia/MG, acompanhamos a jornada do empreendedorismo gastronômico.',
+    p2:'Nosso compromisso não é apenas com estratégias, design ou publicidade. É com <b>legado</b>. Nosso público são jovens empreendedores que não temem o risco, porque entendem que a grandeza exige sacrifício.',
+    missao:'Nossa missão é transformar negócios em ícones.'
+  },
+
+  metodologia:{ nome:'Acelera Food', titulo:'Quatro pilares da metodologia Acelera Food.', destaque:'Um ecossistema de marca.', hub:'4 pilares',
+    fluxo:['Aquisição','Autoridade','Conversão','Retenção','Growth','Resultado'] },
+
+  pilares:[
+    { id:'trafego', fase:'Aquisição', titulo:'Tráfego Pago', eyebrow:'Captação ativa', resumo:'Estrategista exclusivo · Artes para tráfego · Reuniões de alinhamento',
+      frase:'Atrair os clientes certos enquanto <em>eles ainda estão decidindo onde pedir.</em>',
+      chips:[['Estrategista exclusivo','Profissional dedicado à sua conta — não compartilhado.','Uma pessoa que conhece sua operação, seu raio de entrega e seu horário de pico. Ela monta as campanhas, acompanha diariamente e responde pelo resultado.'],
+             ['Artes para tráfego','Criativos por designer interno · sob a estética da marca.','Anúncios estáticos e em vídeo produzidos pela nossa equipe de design, testados em variações para descobrir o que mais converte.'],
+             ['Reunião de alinhamento','Encontros recorrentes para revisar performance.','Reunião mensal com leitura do que foi investido, o que voltou em pedidos e o plano de ajuste para o mês seguinte.']],
+      entregas:[['Setup de pixels e conversões','Tracking de pedidos · funil de aquisição configurado.'],['Campanhas em Meta, Google e Instagram','Audiências segmentadas · teste criativo contínuo.'],['Dashboard de performance','CPM · CTR · CPL · ROAS visíveis em tempo real.'],['Otimização semanal','Pausa do que não converte · escala do que funciona.'],['Relatório mensal executivo','Você sabe exatamente o que gastou e o que voltou.']] },
+    { id:'social', fase:'Autoridade', titulo:'Social Media', eyebrow:'Presença & autoridade', resumo:'Copywriter + estrategista · Calendário editorial · Edição de conteúdo · Artes',
+      frase:'Construir reputação antes <em>do cliente precisar comprar.</em>',
+      chips:[['Copywriter + estrategista','Texto que vende · narrativa que fideliza.','Legendas, roteiros e chamadas escritas para gerar pedido, não só curtida. O estrategista define o que postar e quando, de acordo com as campanhas do mês.'],
+             ['Calendário editorial','Planejamento mensal alinhado a campanhas.','Você recebe o mês inteiro planejado com antecedência: temas, datas, formatos e o que precisa ser gravado na operação.'],
+             ['Edição de conteúdo','Vídeos verticais · cortes · trilhas · legendas.','Transformamos o material bruto gravado no restaurante em Reels prontos para publicar, com ritmo, legenda e trilha.'],
+             ['Artes para ações','Identidade aplicada em cada post · feed coeso.','Artes de promoções, combos e datas especiais, sempre dentro da identidade visual da marca.']],
+      numeros:[['8','Peças de feed','8 peças de feed para posts durante o mês (Reels ou arte).'],['15','Artes mensais','Kit de artes para postar no decorrer do mês.'],['1','Reunião mensal','Revisão de performance + planejamento.']] },
+    { id:'cardapio', fase:'Conversão', titulo:'Engenharia de Cardápio', eyebrow:'Operação que converte', resumo:'UX · iFood · Cardápio digital · Engenheiro exclusivo · Relatórios',
+      frase:'Cardápio não é lista de produtos. É <b>vitrine de venda</b>. Cada posição, foto e preço é decisão estratégica.',
+      chips:[['Engenheiro exclusivo','Especialista em UX de cardápio digital.','Um profissional que analisa seu cardápio com os dados de venda em mãos e reorganiza para aumentar ticket médio e conversão.'],
+             ['Otimização & UX','Estrutura · ordem · destaque · pricing visual.','Ordem das categorias, nomes dos produtos, descrições, fotos e âncoras de preço ajustados para guiar o cliente até o pedido.'],
+             ['Gestão iFood','Categorias · promoções · destaque por horário.','Operamos as ferramentas do iFood: promoções, cupons, destaque por horário e combos, acompanhando o ranking da loja.'],
+             ['Cardápio digital','Cardápio Web e PDV otimizados.','Seu cardápio próprio, sem taxa de marketplace, integrado ao PDV e pronto para receber o tráfego pago.']],
+      funil:['Engajamento','Remarketing','Conversão','Retenção'] },
+    { id:'crm', fase:'Retenção', titulo:'CRM Take3', eyebrow:'Diferencial exclusivo', resumo:'Diferencial exclusivo · Onde o pedido vira recorrência', key:true,
+      frase:'Toda agência ativa a venda. <b>Só nós</b> garantimos que ela volte.<br>Ferramenta exclusiva, desenvolvida pela Take3, que captura cada cliente do delivery e devolve em forma de receita recorrente.',
+      cards:[['01','Análise RFV automática','Classifica toda a base em 5 níveis: Perdido · Risco · Atenção · Promissor · Fiel.','RFV significa Recência, Frequência e Valor. O sistema lê os pedidos e diz quem está prestes a sumir e quem merece um mimo, sem planilha manual.'],
+             ['02','WhatsApp nativo','Conexão via QR · sem broker pago. Disparos em ritmo seguro · bidirecional.','Você conecta o WhatsApp da loja lendo um QR code. As mensagens saem em cadência segura para não bloquear o número e as respostas chegam no mesmo painel.'],
+             ['03','Roleta gamificada','Captura o WhatsApp brincando — o cliente ganha prêmio e vira lead da base.','Um link ou QR no balcão e na sacola: o cliente gira a roleta, ganha um brinde ou desconto e deixa o WhatsApp. Cada prêmio vira um motivo para voltar.'],
+             ['04 · ROI mensurável','Janela de atribuição configurável.','Quem comprou DEPOIS da campanha é atribuído à campanha — não chute.','Você define a janela (por exemplo, 7 dias). Todo pedido de quem recebeu o disparo dentro dessa janela aparece como receita gerada pela campanha.']] }
+  ],
+
+  upsellsCapa:{ eyebrow:'Módulos complementares', titulo:'Além dos pilares,', destaque:'três aceleradores.', sub:'Upsells que entram no plano principal sem refazer contrato. Cada um resolve um gargalo específico da operação.' },
+
+  upsells:{ titulo:'Três upgrades que multiplicam', destaque:'o impacto.', sub:'Adicione ao plano principal — <b>sem refazer contrato</b>. Cada módulo entrega um diferencial operacional independente.',
+    itens:[
+      { n:'01', icon:'▷', titulo:'Fotos & Vídeos', desc:'Captação interna em qualquer lugar do Brasil. Conteúdo <b>food porn</b> focado em tráfego pago.', incluiL:'Inclui', inclui:'01 captação de vídeo · 01 fotográfica · food styling',
+        slide:{ eyebrow:'Upsell 01 · Módulo complementar', titulo:'Captação de', destaque:'conteúdo próprio.', frase:'Nossa equipe produz de forma interna para atender qualquer lugar do Brasil.<br>Produzimos conteúdo <b>food porn</b> focado em tráfego pago.',
+          chips:[['Captação audiovisual','Captação mensal de vídeos com qualidade premium.','Uma diária de gravação por mês na sua operação, com roteiro definido pelo social media e material suficiente para os Reels e anúncios do mês.'],
+                 ['Captação fotográfica','Produção fotográfica do cardápio completo.','Fotos de todos os itens do cardápio em padrão de marketplace, prontas para iFood, cardápio digital e redes.'],
+                 ['Food styling criativo','Pratos preparados para fortalecer a marca.','Montagem e finalização dos pratos para a câmera, com props e composição que valorizam o produto.']],
+          condicoes:['01 captação mensal de vídeos','01 captação fotográfica de cardápio completo','Equipe Take3 se desloca até a operação','Captações fora do escopo são negociadas previamente.'] } },
+      { n:'02', icon:'▭', titulo:'Manual de Montagem', desc:'Treinamos sua equipe a montar e gravar produtos de uma forma que <em>dê vontade de comprar.</em>', incluiL:'Inclui', inclui:'Montagem · iluminação · ângulos · CTA',
+        slide:{ eyebrow:'Upsell 02 · Módulo complementar', titulo:'Seu time produz', destaque:'como profissional.', frase:'Treinamos sua equipe a <b>montar e gravar</b> os produtos de uma forma que <span class="y">dê vontade</span> de comprar.',
+          cards:[['01','Montagem','Ordem dos ingredientes, simetria visual, finalização.','Passo a passo por produto: o que vai primeiro, como empilhar, onde vai o molho e como finalizar para a foto e para a entrega.'],
+                 ['02','Iluminação','Onde posicionar o produto, como usar luz natural ou LED.','Mapa de onde gravar na sua cozinha, horário de melhor luz e um kit de LED simples que a equipe aprende a usar.'],
+                 ['03','Ângulos','Os 5 ângulos que vendem, o que evitar, planos de corte.','Treino prático com o celular da equipe: os ângulos que fazem o produto parecer maior e mais suculento, e os que matam a venda.'],
+                 ['04','Call to action','Como gravar storytelling que vira pedido.<br><b>→ Resultado: time autônomo</b>','Modelos de roteiro curtos para a equipe gravar no dia a dia, sempre terminando com uma chamada para pedir.']] } },
+      { n:'03', icon:'⌂', titulo:'Dark Kit', premium:true, desc:'<b>Criamos CNPJ + lojas dark do food.</b> Mesma cozinha · marcas separadas · faturamento multiplicado.', incluiL:'Resultado', inclui:'2x a 4x o faturamento — mesmo custo fixo.',
+        slide:{ eyebrow:'Upsell 03 · Módulo complementar', titulo:'Dark Kit.', destaque:'Multiplica seu faturamento.', frase:'Criamos <b>CNPJ + lojas dark</b> do food. Mesma cozinha · marcas separadas · faturamento multiplicado — sem aumentar custo fixo.',
+          cards:[['+','CNPJ novo','Abertura societária da nova marca com parceiro contábil.','Cuidamos da abertura, enquadramento tributário e cadastro nos marketplaces junto com a contabilidade parceira.'],
+                 ['+','Identidade visual','Logo · paleta · tipografia de cada marca dark.','Cada marca nasce com nome, logo e cardápio próprios, pensados para um público diferente do da marca principal.'],
+                 ['+','Loja no iFood','Cadastro · cardápio · fotos · categorização otimizada.','Loja publicada com fotos profissionais e cardápio engenheirado desde o primeiro dia.'],
+                 ['+','Tráfego dedicado','Campanhas separadas por marca · ROI próprio.','Cada marca tem verba, campanhas e relatório separados, para você saber exatamente o que cada uma rende.']],
+          resultado:['2x a 4x','o faturamento da operação — mesma cozinha física.','Sem novo aluguel · sem nova equipe.'] } }
+    ] },
+
+  social:{ titulo:'Metodologia do', destaque:'Social.', sub:'Como cuidamos da presença digital da sua marca, do primeiro diagnóstico ao relatório mensal. A proposta traz o volume e o preço; aqui está o jeito de trabalhar.',
+    blocos:[
+      { n:'01', t:'Posicionamento', faz:['Diagnóstico inicial da marca e das redes','Objetivos e público-alvo','Estratégia de comunicação e posicionamento','Pilares de conteúdo e calendário editorial'], recebe:['Documento de posicionamento: objetivos, público, tom de voz e pilares','Revisão dos pilares a cada ciclo, na reunião mensal'], voce:['Clareza sobre o que a marca quer vender e para quem'] },
+      { n:'02', t:'Planejamento', faz:['Campanhas e ações promocionais','Estratégias de alcance, engajamento e visibilidade','Datas sazonais e oportunidades comerciais','Temas, formatos e frequência das publicações'], recebe:['Calendário editorial mensal, com tema, formato e data de cada publicação','Planejamento sempre focado nos próximos 30 dias','Datas e promoções com aquecimento antes do dia'], voce:['Promoções definidas com antecedência','Aprovação do calendário na última semana do mês'] },
+      { n:'03', t:'Criação e design', faz:['Artes para posts e stories','Materiais para campanhas','Padronização visual da comunicação','Adaptação aos formatos de cada plataforma'], recebe:['Artes de 8 a 12 posts por mês (2 a 3 por semana) e dos stories do calendário','Uma rodada de ajuste por peça dentro do plano'], voce:['Identidade visual completa e materiais de campanha (preços, regras, fotos)'] },
+      { n:'04', t:'Captação e produção', faz:['Roteiro de cada diária: cenas, produtos e ambientes, com gancho, desenvolvimento e chamada','Fotos e vídeos na sua casa, com equipe própria da Take3','Edição para Reels e stories','Conferência do material contra o planejamento'], recebe:['Diárias de captação conforme o plano, agendadas no calendário','Banco de vídeos curtos e fotos editados para o mês'], voce:['Agenda, espaço, produtos prontos e equipe avisada','Autorização de uso de imagem de quem aparecer'] },
+      { n:'05', t:'Agendamento e publicação', faz:['Organização do calendário de publicações','Agendamento de posts e stories','Conferência de legendas, marcações, links e formatos','Acompanhamento da execução do calendário'], recebe:['8 a 12 posts e os stories do mês publicados nas datas aprovadas','Legendas que pedem reação, não só descrevem o produto'], voce:['Avisar mudanças de cardápio, horário, preço ou promoção com antecedência'] },
+      { n:'06', t:'Direct e mensagens', faz:['Acompanhamento das mensagens do Instagram','Resposta em até 24 horas úteis, no horário de atendimento','Encaminhamento de pedidos e dúvidas comerciais','Identificação de oportunidades de venda'], recebe:['Direct respondido em até 24 horas úteis','Pedidos comerciais encaminhados no mesmo dia útil'], voce:['Um contato que responda ao que for encaminhado'] },
+      { n:'07', t:'Resultados e otimização', faz:['Acompanhamento de alcance e engajamento','Análise dos conteúdos com melhor desempenho','Avaliação do crescimento da audiência','Ajustes para o próximo planejamento'], recebe:['Reunião mensal com relatório: seguidores, alcance, engajamento, conteúdos campeões e comparação com o diagnóstico'], voce:['Acesso aos insights da conta e presença na reunião mensal'] },
+      { n:'08', t:'Influenciadores', opcional:true, faz:['Prospecção e seleção de influenciadores','Negociação de cachês, permutas e contrapartidas','Briefing, datas e visitas à loja','Coordenação das gravações e das entregas'], recebe:['Perfis sugeridos, briefing de cada ação, agenda e conferência das entregas'], voce:['Cachê ou permuta pagos diretamente pelo cliente'] }
+    ] },
+  regras:{ titulo:'Regras de', destaque:'operação.',
+    itens:[['Aprovação','O calendário do mês seguinte chega na última semana para aprovação. Cada peça tem uma rodada de ajuste; ajustes além disso viram solicitação, com o prazo da tabela de atendimento. Sem resposta na data combinada, o calendário segue como enviado, para o mês não ficar sem publicação.'],['Reunião mensal','Uma reunião por mês, com o relatório de resultados e o calendário seguinte.'],['Situações sensíveis','Reclamação pública, avaliação negativa ou comentário ofensivo: avisamos você no mesmo dia útil e só respondemos com a sua orientação. A Take3 não apaga nem responde por conta própria.']] },
+  condicoes:{ titulo:'Condições', destaque:'do contrato.',
+    itens:[['Vigência','Contrato de 6 meses, com os 2 primeiros meses como período de experiência: qualquer uma das partes pode encerrar com aviso.'],['Direitos de uso','O conteúdo e as métricas pertencem às duas partes. Você usa livremente nos seus canais; a Take3 pode usar no portfólio e avisa antes de usar métricas em cases e propostas.'],['Captação','Feita pela equipe própria da Take3. Não terceirizamos.'],['Encerramento','Você recebe os arquivos finais e mantém todos os acessos. A Take3 sai das contas na data de encerramento.']],
+    fora:['Gestão de tráfego pago e verba de anúncio','Cachê ou permuta de influenciadores','Comentários e WhatsApp','Criação de promoções (você define, nós produzimos)','Captação além das diárias contratadas'] },
+  orcamento:{ titulo:'Investimento', destaque:'do seu plano.', plano:'Social · Plano mensal',
+    itens:['8 a 12 posts por mês + stories do calendário','1 diária de captação por mês','Direct respondido em até 24h úteis','Reunião mensal com relatório de resultados','Onboarding de 30 dias incluso no mês 01'],
+    valor:'R$ 0.000,00', periodo:'por mês',
+    condicoes:['Pagamento mensal por PIX ou boleto','Vencimento todo dia 10','Contrato de 6 meses · 2 primeiros de experiência'],
+    validade:'Proposta válida por 15 dias', obs:'Clique aqui para escrever as observações desta proposta.' },
+  processo:{ titulo:'Da assinatura ao', destaque:'social rodando.',
+    etapas:[['01','Mês 01 · 30 dias','Onboarding','Diagnóstico, perfil reformado, posicionamento, 1ª captação e o calendário do mês 02 aprovado'],['02','Mês 02','Primeiro ciclo','Calendário no ar, captação, direct e a 1ª reunião com relatório comparado ao diagnóstico'],['03','Mês 03','Ajuste fino','O que mais rendeu vira padrão, os pilares são revisados e o mês 04 já chega aprovado'],['04','Mês 04','Ritmo','Datas sazonais e promoções aquecidas antes do dia, banco de conteúdo sempre à frente'],['05','Mês 05','Escala','Mais dos formatos campeões, audiência crescendo e menos ajustes por peça'],['☆','Mês 06','Balanço','Relatório dos 6 meses contra o diagnóstico e o plano do próximo ciclo']],
+    banner:['Contrato de 6 meses','cada mês é planejado com 30 dias de antecedência, publicado e medido — os 2 primeiros meses são de experiência.'] },
+  ciclo:{ titulo:'O ciclo de', destaque:'todo mês.',
+    semanas:[['Semana 1','Captação e produção','Diária de captação roteirizada (gancho, desenvolvimento e chamada), edição de fotos e Reels e artes na identidade da marca.'],['Semanas 2 e 3','Publicação e direct','Posts e stories publicados nas datas aprovadas, legendas que pedem reação e direct respondido em até 24h úteis.'],['Última semana','Próximo calendário','Calendário dos próximos 30 dias enviado para aprovação, com datas sazonais e promoções já aquecidas.'],['Reunião mensal','Resultado e ajuste','Seguidores, alcance, engajamento, os conteúdos campeões e o que muda no próximo planejamento.']],
+    voce:['Acessos às contas e aos insights','Promoções definidas com antecedência','Aprovação do calendário na última semana','Agenda, produtos prontos e equipe avisada na captação'],
+    fora:['Tráfego pago e verba de anúncio','Cachê de influenciadores (opcional, orçado à parte)','Comentários e WhatsApp (opcional)'] },
+
+  atendimento:{ horario:'Segunda a sexta | 09h às 22h', niveis:[['Urgente','1 a 2 dias úteis','Itens pontuais · sujeito à viabilidade técnica'],['Médio','5 dias úteis','Requer briefing completo · materiais aprovados'],['Normal','7 dias úteis','Pode variar conforme complexidade e agenda']], solicitacoes:'Link na bio (abrir ticket)' },
+
+  infra:{ titulo:'1ª Sede', foto:'assets/sede.jpg', texto:'Em janeiro de 2026, nossos clientes dobraram suas metas e elevaram seus resultados. Diante desse crescimento, demos um passo estratégico com a inauguração do <b>nosso primeiro escritório físico</b>, permitindo um acompanhamento mais próximo da equipe, maior controle dos processos e a entrega de um <span class="y">pós-venda mais eficiente</span> — com atendimento e resultados ainda melhores para nossos clientes.',
+    stats:[['15','+','Equipe','profissionais fixos'],['20','+','Clientes ativos','marcas em operação'],['2','x','Resultado médio','de faturamento em 6 meses']], local:'Uberlândia · MG' },
+
+  investimento:{ titulo:'Investimento', destaque:'sob medida.', sub:'Cada negócio é uma jornada distinta.<br>Por isso preparamos a <b>proposta dedicada</b> após o diagnóstico inicial.',
+    planos:[['Plano 01 · Essencial','Operação inicial',['Tráfego pago + Social media','Onboarding completo','Para quem está começando']],['Plano 02 · Performance','Operação completa',['4 pilares (Essencial + Cardápio + CRM)','Reuniões mensais com Art Director','Para escalar com previsibilidade']],['Plano 03 · Império','Multimarca',['Completo + módulos de upsell','Dark Kit + Captação interna','Para quem constrói legado'],true]] },
+
+  proximos:{ titulo:'Você está pronto', destaque:'para o próximo nível?',
+    passos:[['01','Reunião de descoberta','45 min · remoto','<b>Conhecemos seu negócio.</b><br>Você sai com 3 pontos críticos da sua operação — independente de fechar conosco.'],['02','Proposta sob medida','Até 48h após a call','<b>Plano + investimento + cronograma.</b><br>Construído a partir do diagnóstico — não é cardápio fixo.'],['03','Kickoff','Em 30 dias no ar','<b>Onboarding do social.</b><br>Diagnóstico · perfil reformado · 1ª captação · calendário aprovado.',true]] },
+
+  casesCapa:{ titulo:'Cases que falam por', destaque:'resultado.', sub:'Operações reais · campanhas reais · números reais.' },
+
+  cases:[
+    { tag:'Case 01 · Pizzaria · Demanda > capacidade', pre:'Travamos a operação em', big:'um único dia.', sub:'Eles tiveram que <b>fechar os cardápios.</b>', label:'O que aconteceu',
+      stats:[['1','','dia de campanha'],['+0','','capacidade disponível'],['STOP','','cardápios pausados']],
+      quote:['A campanha trouxe mais demanda do que a cozinha conseguia produzir.','Relato do cliente'],
+      cliente:['assets/logo-diparma.jpg','Pizzaria Di Parma','Delivery / Salão','Cliente'],
+      fotos:[['assets/case1-caixas.jpg','Caixas na fila'],['assets/case1-pedidos.jpg','Comandas'],['assets/case1-impressora.jpg','+800 pedidos',true]],
+      barras:[['Capacidade da cozinha',100,'100%'],['Demanda gerada',180,'+800 pedidos',true]],
+      estrategia:[['Problema','Operação com demanda estável e capacidade ociosa fora dos horários de pico.'],['Estratégia','Campanha de lançamento em Meta com oferta de alto apelo e cardápio reorganizado para o pedido rápido.'],['Execução','Criativos food porn, segmentação por raio de entrega e disparo em janela única de um dia.'],['Resultado','Mais de 800 pedidos em um dia. Demanda acima da capacidade: cardápios pausados para a cozinha dar conta.']] },
+    { tag:'Case 02 · Pastelaria · Escala', pre:'Mais de', big:'R$ 30 mil em 1 dia', sub:'— sem cair o <b>ticket médio.</b>', label:'Resultados da campanha',
+      stats:[['30','k+','faturamento em 1 dia'],['=','','ticket preservado'],['1','','lançamento']],
+      quote:['Escalar faturamento mantendo o ticket é o que separa campanha de promoção.','Leitura Take3'],
+      cliente:['assets/logo-delicia.jpg','Delícias Pastéis','Delivery / Salão','Nome da operação'],
+      fotos:[['assets/case2-grupo.jpg','Grupo da operação'],['assets/case2-salao.jpg','Fila no salão',true],['assets/case2-socio.jpg','Relato do sócio']],
+      barras:[['Dia comum',35,'base'],['Dia do lançamento',100,'R$ 30k+',true]],
+      estrategia:[['Problema','Faturamento estagnado e promoções anteriores que derrubavam o ticket médio.'],['Estratégia','Lançamento com combo de valor percebido alto em vez de desconto, sustentando o ticket.'],['Execução','Tráfego pago + aquecimento no social por uma semana, com fila organizada no salão no dia.'],['Resultado','Mais de R$ 30 mil em um dia e 365 pedidos, com ticket médio preservado.']] },
+    { tag:'Case 03 · Pizzaria · Campanha pontual', pre:'Mais de', big:'R$ 40 mil', sub:'em uma <b>única campanha.</b>', label:'Resultados da campanha',
+      stats:[['40','k+','faturamento gerado'],['1','','campanha'],['↑','','pico de pedidos']],
+      quote:['Campanha bem desenhada é receita previsível em janelas certas.','Leitura Take3'],
+      cliente:['assets/logo-happy.jpg','Happy Pizza – Araguari','Delivery','Nome da operação'],
+      fotos:[['assets/case3-ads.jpg','Print do Gerenciador de Anúncios da Meta',true]],
+      barras:[['Investimento em mídia',3,'R$ 1.325'],['Receita atribuída',100,'R$ 42.608',true]],
+      estrategia:[['Problema','Operação delivery com boa base, mas sem campanhas estruturadas de pico.'],['Estratégia','Campanha pontual de conversão com janela definida e oferta ancorada no cardápio engenheirado.'],['Execução','18 campanhas estruturadas, teste de conjuntos e escala no vencedor, com ROAS acompanhado em tempo real.'],['Resultado','R$ 42.608 em valor de conversão com R$ 1.325 investidos: 507 compras e custo por compra de R$ 2,61.']] }
+  ],
+
+  fim:{ frase:'cada ponto conta', sub:'Take3 Digital · Marketing gastronômico e produtora audiovisual' }
+};
+
+/* ============ RENDER ============ */
+(function(){
+  const stage=document.getElementById('stage');
+  const D=deck, FR=D.rodape;
+  const wm=px=>`<img src="assets/logo-take3.svg" alt="${D.marca}" style="height:${px}px;width:auto;display:block">`;
+  const slides=[]; const add=o=>slides.push(o);
+  const chips=(arr,extra='')=>arr.map((c,j)=>`<button class="chip a sl${j===0?' on':''}" style="--i:${3+j}${extra}">${c[0]}<small>${c[1]}</small><em>${c[2]||''}</em></button>`).join('');
+  const cardsX=(arr,cls)=>arr.map((c,j)=>`<div class="card lift a${cls(j)}" style="--i:${3+j}" tabindex="0"><span class="hintc">+</span><div class="${/^(\d\d|\+)$/.test(c[0])?'num':'tag'}">${c[0]}</div><h3 class="${/^\d\d$/.test(c[0])?'':'n'}">${c[1]}</h3><p>${c[2]}</p><div class="more">${c[3]||''}</div></div>`).join('');
+
+  // 1 capa
+  add({footL:`${D.marca} · ${D.ano}`, footR:'', html:`
+    <div class="glow" style="width:900px;height:900px;left:50%;top:50%;transform:translate(-50%,-50%);background:#ff6700;opacity:.14"></div>
+    <div class="squircle a pop" style="--i:1;width:760px;height:760px;left:50%;top:50%;transform:translate(-50%,-50%);border-color:rgba(241,243,238,.08)"></div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;height:100%;position:relative">
+      <div class="a" style="--i:0">${wm(150)}</div>
+      <div class="rule a gw" style="--i:1;margin:34px auto 38px;width:120px;transform-origin:center"></div>
+      <div class="tagline a" style="--i:2;line-height:1.7">${D.capa.segmento}</div>
+      <h1 class="a" style="--i:3;margin-top:14px;font-size:96px">${D.capa.titulo}</h1>
+      <div class="a" style="--i:4;margin-top:40px;display:flex;align-items:center;gap:18px"><span style="width:44px;height:1px;background:var(--line2)"></span><span style="font-size:13px;letter-spacing:.32em;text-transform:uppercase;color:var(--dim)">Apresentado para</span><span style="width:44px;height:1px;background:var(--line2)"></span></div>
+      <div class="cover-client a" id="cliente" style="--i:5;margin-top:10px">${D.cliente}</div>
+    </div>`});
+
+  // 2 pauta da reunião
+  const PAUTA=[
+    ['Quem somos','O manifesto da Take3 e o que nos move.','manifesto'],
+    ['Metodologia do Social','Os oito blocos do nosso trabalho.','social'],
+    ['Como trabalhamos','Da assinatura ao social rodando, e o ciclo de todo mês.','processo'],
+    ['Atendimento e regras','Horários, prazos, aprovação e situações sensíveis.','atendimento'],
+    ['Infraestrutura','A sede e a estrutura por trás da entrega.','infra'],
+    ['Condições','Vigência, direitos de uso e o que fica fora do plano.','condicoes'],
+    ['Próximos passos','Duas conversas, uma decisão.','proximos']];
+  add({id:'pauta', path:'Pauta', footL:'Take3 Digital · Pauta da reunião', footR:'', html:`
+    <p class="eyebrow a" style="--i:0">Pauta da reunião</p>
+    <h2 class="a" style="--i:1;font-size:72px">O que vamos ver <span class="o">hoje.</span></h2>
+    <p class="lead a" style="--i:2;margin-top:14px">Sete temas, nesta ordem. Clique em qualquer um para ir direto a ele.</p>
+    <div class="cols c2" style="margin-top:36px;gap:14px 40px">${PAUTA.map((p,j)=>`<button class="ag a" data-go="${p[2]}" style="--i:${3+j}"><span class="n">0${j+1}</span><span class="tx"><b>${p[0]}</b><small>${p[1]}</small></span><i>→</i></button>`).join('')}</div>`});
+
+  // 3 quem somos
+  add({id:'manifesto', path:'Manifesto', footL:'Take3 Digital · Manifesto', footR:'', html:`
+    <p class="eyebrow a" style="--i:0">Quem somos</p>
+    <h2 class="a" style="--i:1;font-size:72px">${D.quemSomos.titulo}<br><span class="o">${D.quemSomos.destaque}</span></h2>
+    <div class="rule a gw" style="--i:2;margin:26px 0 10px;width:120px"></div>
+    <div class="cols c2 a" style="--i:3;margin-top:50px;gap:60px"><p class="lead" style="margin:0">${D.quemSomos.p1}</p><p class="lead" style="margin:0">${D.quemSomos.p2}</p></div>
+    <div class="mission a mt" style="--i:4">${D.quemSomos.missao}</div>`});
+
+  // metodologia do social: visão geral
+  add({id:'social', path:'Metodologia do Social', footL:'Take3 Digital · Metodologia do Social', footR:'', html:`
+    <p class="eyebrow a" style="--i:0">Social media para restaurantes</p>
+    <h2 class="a" style="--i:1;font-size:72px">${D.social.titulo} <span class="o">${D.social.destaque}</span></h2>
+    <p class="lead a" style="--i:2;margin-top:12px;max-width:1200px">${D.social.sub}</p>
+    <div class="cols c4 mt" style="gap:16px">${D.social.blocos.map((b,j)=>`<button class="card lift a" data-go="social-${Math.floor(j/2)+1}" style="--i:${3+j};padding:22px 24px"><div class="tag" style="font-size:13px">${b.n}${b.opcional?' · opcional':''}</div><h3 class="n" style="font-size:24px;margin-top:8px">${b.t}</h3><p style="font-size:15px;line-height:1.5;color:var(--muted);margin-top:6px">${b.recebe[0]}</p></button>`).join('')}</div>`});
+
+  // metodologia do social: detalhe, dois blocos por slide
+  [0,1,2,3].forEach(k=>{
+    const par=D.social.blocos.slice(k*2,k*2+2);
+    add({id:`social-${k+1}`, path:`Social · ${par.map(b=>b.t).join(' + ')}`, footL:`Metodologia do Social · ${par.map(b=>b.n).join(' e ')}`, footR:'', html:`
+    <p class="eyebrow a" style="--i:0">Metodologia do Social</p>
+    <div class="cols c2" style="margin-top:18px;gap:28px">${par.map((b,j)=>`<div class="card a" style="--i:${1+j};padding:30px 32px">
+      <div class="tag" style="font-size:14px">${b.n}${b.opcional?' · opcional, orçado à parte':''}</div>
+      <h3 class="n" style="font-size:38px;margin:8px 0 18px">${b.t}</h3>
+      <div class="tag" style="font-size:12px;color:var(--muted)">O que fazemos</div>
+      <ul style="font-size:17px;line-height:1.55;margin:8px 0 18px;padding-left:20px">${b.faz.map(x=>'<li>'+x+'</li>').join('')}</ul>
+      <div class="tag" style="font-size:12px">O que você recebe</div>
+      <ul style="font-size:17px;line-height:1.55;margin:8px 0 18px;padding-left:20px;font-weight:600">${b.recebe.map(x=>'<li>'+x+'</li>').join('')}</ul>
+      <div class="tag" style="font-size:12px;color:var(--yellow)">O que precisamos de você</div>
+      <ul style="font-size:17px;line-height:1.55;margin:8px 0 0;padding-left:20px;color:var(--muted)">${b.voce.map(x=>'<li>'+x+'</li>').join('')}</ul>
+    </div>`).join('')}</div>`});
+  });
+
+  // 13 processo
+  add({id:'processo', path:'Processo', footL:'Processo · Social', footR:'', html:`
+    <p class="eyebrow a" style="--i:0">Como trabalhamos</p>
+    <h2 class="a" style="--i:1;font-size:72px">${D.processo.titulo}<br><span class="o">${D.processo.destaque}</span></h2>
+    <div class="timeline seis"><div class="fill"></div>${D.processo.etapas.map((e,j)=>`<div class="step a pop${e[0]==='☆'?' star':''}" style="--i:${2+j}"><div class="dot">${e[0]}</div><div class="m">${e[1]}</div><h3>${e[2]}</h3><p>${e[3]}</p></div>`).join('')}</div>
+    <div class="banner a mt" style="--i:7"><small>${D.processo.banner[0]}</small>${D.processo.banner[1]}</div>`});
+
+  // ciclo mensal do social
+  add({id:'ciclo', path:'Ciclo mensal', footL:'Processo · Ciclo mensal', footR:'', html:`
+    <p class="eyebrow a" style="--i:0">Metodologia do social</p>
+    <h2 class="a" style="--i:1;font-size:72px">${D.ciclo.titulo} <span class="o">${D.ciclo.destaque}</span></h2>
+    <div class="cols c4 mt">${D.ciclo.semanas.map((w,j)=>`<div class="card a" style="--i:${2+j};padding:28px 26px;min-height:250px"><div class="tag" style="font-size:13px">${w[0]}</div><h3 class="n" style="font-size:27px;margin-top:10px">${w[1]}</h3><p style="font-size:17px;line-height:1.6;color:var(--muted)">${w[2]}</p></div>`).join('')}</div>
+    <div class="cols c2 a" style="--i:6;margin-top:22px">
+      <div class="card" style="padding:22px 26px"><div class="tag" style="font-size:12px">O que precisamos de você</div><p style="font-size:17px;line-height:1.7;margin-top:8px">${D.ciclo.voce.map(x=>'→ '+x).join('<br>')}</p></div>
+      <div class="card" style="padding:22px 26px"><div class="tag" style="font-size:12px">Fora do plano mensal</div><p style="font-size:17px;line-height:1.7;margin-top:8px;color:var(--muted)">${D.ciclo.fora.map(x=>'· '+x).join('<br>')}</p></div>
+    </div>`});
+
+  // 14 atendimento
+  add({id:'atendimento', path:'Atendimento', footL:'Atendimento · Horários & prazos', footR:'', html:`
+    <div style="display:flex;flex-direction:column;align-items:center;text-align:center;height:100%">
+    <p class="eyebrow a" style="--i:0">Horários & prazos</p>
+    <h2 class="a" style="--i:1;font-size:80px">Atendimento <span class="o">Take3</span></h2>
+    <p class="lead a" style="--i:2;text-align:center;margin:30px auto 0">Atendimento aos grupos:</p>
+    <div class="a" style="--i:3;font-weight:700;font-size:44px;margin-top:4px;color:var(--yellow)">${D.atendimento.horario}</div>
+    <div class="card a" style="--i:4;width:1060px;margin-top:40px;padding:0;overflow:hidden;background:rgba(0,0,0,.2)"><table><thead><tr><th>Nível</th><th>Prazo padrão</th><th>Observações</th></tr></thead><tbody>${D.atendimento.niveis.map(n=>`<tr><td>${n[0]}</td><td>${n[1]}</td><td>${n[2]}</td></tr>`).join('')}</tbody></table></div>
+    <p class="a" style="--i:5;margin-top:34px;color:var(--muted);font-size:19px">Solicitações:<br><b style="color:var(--orange);font-size:22px">${D.atendimento.solicitacoes}</b></p></div>`});
+
+  // regras de operação
+  add({id:'regras', path:'Regras de operação', footL:'Atendimento · Regras de operação', footR:'', html:`
+    <p class="eyebrow a" style="--i:0">Como combinamos</p>
+    <h2 class="a" style="--i:1;font-size:80px">${D.regras.titulo} <span class="o">${D.regras.destaque}</span></h2>
+    <div class="cols c3 mt">${D.regras.itens.map((r,j)=>`<div class="card a" style="--i:${2+j};padding:30px 32px"><div class="tag" style="font-size:14px">${r[0]}</div><p style="font-size:19px;line-height:1.65;margin-top:12px">${r[1]}</p></div>`).join('')}</div>`});
+
+  // 15 infra com foto
+  add({id:'infra', path:'Infraestrutura', footL:'Infraestrutura · Primeira sede Take3', footR:'', html:`
+    <p class="eyebrow a" style="--i:0">Evolução da operação</p>
+    <div class="row" style="gap:60px;flex:1">
+      <div class="grow" style="display:flex;flex-direction:column"><h2 class="a" style="--i:1;font-size:80px">${D.infra.titulo} <span class="o">Take3</span></h2><p class="lead a" style="--i:2;margin-top:40px;font-size:22px">${D.infra.texto}</p>
+        <div class="row a mt" style="--i:3;gap:60px">${D.infra.stats.map(s=>`<div class="stat"><div class="l">${s[2]}</div><div class="v thin"><span data-count="${s[0]}">${s[0]}</span>${s[1]}</div><div class="d">${s[3]}</div></div>`).join('')}</div></div>
+      <div class="a sr" style="--i:3;display:grid;gap:14px;align-content:center;justify-items:end"><div class="photo sede"><img src="${D.infra.foto}" alt="Fachada da primeira sede"></div><div class="eyebrow" style="margin:0">${D.infra.local}</div></div>
+    </div>`});
+
+  // condições
+  add({id:'condicoes', path:'Condições', footL:'Condições · Contrato', footR:'', html:`
+    <p class="eyebrow a" style="--i:0">Proposta comercial</p>
+    <h2 class="a" style="--i:1;font-size:80px">${D.condicoes.titulo} <span class="o">${D.condicoes.destaque}</span></h2>
+    <div class="row mt" style="gap:28px;align-items:stretch">
+      <div class="cols c2 grow" style="gap:18px">${D.condicoes.itens.map((c,j)=>`<div class="card a" style="--i:${2+j};padding:26px 28px"><div class="tag" style="font-size:13px">${c[0]}</div><p style="font-size:18px;line-height:1.6;margin-top:10px">${c[1]}</p></div>`).join('')}</div>
+      <div class="card a" style="--i:6;padding:26px 28px;width:420px;flex:none"><div class="tag" style="font-size:13px;color:var(--yellow)">Fora do plano mensal</div><p style="font-size:18px;line-height:1.8;margin-top:10px;color:var(--muted)">${D.condicoes.fora.map(x=>'· '+x).join('<br>')}</p></div>
+    </div>`});
+
+  // 17 próximos passos
+  add({id:'proximos', path:'Próximos passos', footL:'Próximos passos · Confidencial', footR:'', html:`
+    <p class="eyebrow a" style="--i:0">Duas conversas · Uma decisão</p>
+    <h2 class="a" style="--i:1;font-size:84px">${D.proximos.titulo}<br>para o <span class="o">${D.proximos.destaque.replace('para o ','')}</span></h2>
+    <div class="cols c3" style="margin-top:36px">${D.proximos.passos.map((p,j)=>`<div class="card outline a${p[4]?' hot':''}" style="--i:${2+j};border-color:${p[4]?'transparent':'var(--orange)'};padding:28px 30px"><div style="display:flex;align-items:center;gap:12px"><span style="width:40px;height:40px;border-radius:50%;background:${p[4]?'var(--ink)':'var(--orange)'};color:${p[4]?'var(--yellow)':'var(--ink)'};display:grid;place-items:center;font-weight:800;font-size:14px">${p[0]}</span><span class="tag" style="font-size:15px;${p[4]?'color:var(--ink)':''}">${p[1]}</span></div><h3 class="n" style="font-size:30px;margin:14px 0 10px;padding-bottom:12px;border-bottom:1px solid ${p[4]?'rgba(3,42,52,.3)':'var(--line)'}">${p[2]}</h3><p style="font-size:17px">${p[3]}</p></div>`).join('')}</div>
+    `});
+
+  // 22 fim
+  add({footL:'', footR:'', html:`
+    <div class="glow" style="width:600px;height:600px;left:50%;top:50%;transform:translate(-50%,-50%);background:#ff6700;opacity:.18"></div>
+    <div class="squircle a pop" style="--i:1;width:540px;height:540px;left:50%;top:50%;transform:translate(-50%,-52%)"></div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;position:relative">
+      <div class="a" style="--i:0;font-style:italic;font-weight:600;font-size:52px;letter-spacing:-.02em;margin-bottom:60px">${D.fim.frase}</div>
+      <div class="a pop" style="--i:2">${wm(170)}</div>
+      <div class="rule a gw" style="--i:3;margin:40px auto 90px;width:170px"></div>
+      <div class="a" style="--i:4;font-size:18px;letter-spacing:.32em;text-transform:uppercase;color:var(--muted)">${D.fim.sub}</div>
+    </div>`});
+
+  // mount
+  const total=slides.length;
+  slides.forEach((s,i)=>{
+    const el=document.createElement('section'); el.className='slide'+(s.grad?' grad':''); if(s.id) el.id=s.id;
+    el.innerHTML=(i>0&&i<total-1?`<div class="top"><div style="display:flex;align-items:center;gap:14px"><img src="assets/logo-take3.svg" alt="" style="height:30px;width:auto">&nbsp;·&nbsp;<span class="cur">${s.path||''}</span></div></div>`:'')+s.html+`<div class="foot"><span>${s.footL||''}</span><span>${s.footR||''}</span></div>`;
+    stage.appendChild(el);
+  });
+  const els=[].slice.call(stage.querySelectorAll('.slide'));
+  const menu=document.getElementById('menu');
+  menu.innerHTML=slides.map((s,i)=>`<button data-n="${i}"><i>${String(i+1).padStart(2,'0')}</i>${s.path||(i===0?'Capa':'Encerramento')}</button>`).join('');
+
+  /* ============ ENGINE ============ */
+  let cur=0,busy=false,step=0;
+  function setStep(k){const sd=slides[cur]; if(!sd.steps) return; step=k; const el=els[cur], sc=el.querySelector('.sc'); for(let j=1;j<=sd.steps;j++) sc.classList.toggle('st-'+j,j<=k); const fr=el.querySelector('.foot span:last-child'); if(fr) fr.innerHTML='<span class="dots">'+Array.from({length:sd.steps+1},(_,j)=>'<i class="'+(j<=k?'on':'')+'"></i>').join('')+'</span>'; }
+  window.__deck={setStep:k=>setStep(k),steps:()=>slides[cur].steps||0};
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const pad=n=>String(n).padStart(2,'0');
+  function counters(s){
+    s.querySelectorAll('[data-count]').forEach(el=>{
+      const end=+el.dataset.count, p=!!el.dataset.pad, fmt=v=>p?pad(v):String(v);
+      if(reduce){el.textContent=fmt(end);return}
+      const t0=performance.now(), dur=1100;
+      (function tick(now){const k=1-Math.pow(1-Math.min(1,(now-t0)/dur),3);el.textContent=fmt(Math.round(end*k));if(k<1)requestAnimationFrame(tick)})(t0);
+    });
+    s.querySelectorAll('.bar .f').forEach(f=>{f.style.width='0';setTimeout(()=>f.style.width=f.dataset.w+'%',250)});
+  }
+  function chrome(){
+    document.getElementById('progress').style.width=((cur+1)/total*100)+'%';
+    const c=document.getElementById('count'); c.innerHTML=`<b>${pad(cur+1)}</b> / ${total}`; c.className=slides[cur].grad?'dk':'';
+    menu.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('cur',i===cur));
+  }
+  function go(n){
+    n=(n+total)%total; if(busy||n===cur) return; busy=true;
+    const from=els[cur], to=els[n];
+    from.classList.remove('on'); from.classList.add('out'); setTimeout(()=>from.classList.remove('out'),420);
+    to.querySelectorAll('.a').forEach(el=>{el.style.animation='none';void el.offsetWidth;el.style.animation=''});
+    to.querySelectorAll('.case-panel').forEach(p=>p.classList.remove('flipped'));
+    to.classList.add('on'); cur=n; chrome(); step=0; setStep(0);
+    setTimeout(counters,350,to);
+    try{location.hash='s'+(cur+1)}catch(e){}
+    setTimeout(()=>busy=false,420);
+    document.getElementById('hint').classList.add('gone');
+  }
+  const goId=id=>{const i=els.findIndex(e=>e.id===id); if(i>=0) go(i)};
+  const next=e=>{const sd=slides[cur]; if(sd.steps&&step<sd.steps&&!(e&&e.shiftKey)) setStep(step+1); else go(cur+1)};
+  const prev=e=>{const sd=slides[cur]; if(sd.steps&&step>0&&!(e&&e.shiftKey)) setStep(step-1); else go(cur-1)};
+  document.getElementById('next').onclick=()=>next(); document.getElementById('prev').onclick=()=>prev();
+  function fullscreen(){const d=document.documentElement; try{(document.fullscreenElement?document.exitFullscreen():d.requestFullscreen()).catch(()=>{})}catch(err){}}
+  document.getElementById('fs').onclick=fullscreen;
+  const menuBtn=document.getElementById('menuBtn');
+  menuBtn.onclick=()=>{menu.hidden=!menu.hidden;menuBtn.setAttribute('aria-expanded',String(!menu.hidden))};
+  menu.addEventListener('click',e=>{const b=e.target.closest('button[data-n]'); if(b){go(+b.dataset.n);menu.hidden=true;menuBtn.setAttribute('aria-expanded','false')}});
+  document.addEventListener('keydown',e=>{
+    if(e.target.isContentEditable){if(e.key==='Enter'||e.key==='Escape'){e.preventDefault();e.target.blur()}return}
+    if(e.target.closest('.chip,.x li,.card[tabindex]')&&(e.key==='Enter'||e.key===' ')){e.preventDefault();e.target.click();return}
+    if(['ArrowRight',' ','PageDown','Enter','ArrowDown'].includes(e.key)){e.preventDefault();next(e)}
+    else if(['ArrowLeft','PageUp','Backspace','ArrowUp'].includes(e.key)){e.preventDefault();prev(e)}
+    else if(e.key==='Home')go(0); else if(e.key==='End')go(total-1);
+    else if(e.key==='Escape'){menu.hidden=true}
+    else if(e.key==='f'||e.key==='F'){fullscreen()}
+  });
+  stage.addEventListener('click',e=>{
+    const go1=e.target.closest('[data-go]'); if(go1){goId(go1.dataset.go);return}
+    const flip=e.target.closest('[data-flip]'); if(flip){flip.closest('.case-panel').classList.toggle('flipped',flip.dataset.flip==='1');return}
+    const li=e.target.closest('.x li'); if(li){li.classList.toggle('open');return}
+    const chip=e.target.closest('.chip'); if(chip){const was=chip.classList.contains('on');chip.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));if(!was)chip.classList.add('on');return}
+    const card=e.target.closest('.card.lift'); if(card&&card.querySelector('.more')){card.classList.toggle('open');return}
+    if(e.target.closest('button,a,.contact,.card,.stat,.quote,table,.photo,.client,.pil,[contenteditable]')) return;
+    const r=stage.getBoundingClientRect(); ((e.clientX-r.left)/r.width<0.22)?prev():next();
+  });
+  const cl=document.getElementById('cliente'); if(cl){
+    try{const v=new URLSearchParams(location.search).get('para'); if(v&&v.trim()) cl.textContent=v.trim().slice(0,80)}catch(_){}
+    cl.addEventListener('focus',()=>{if(cl.textContent.trim().startsWith('[')) setTimeout(()=>{const r=document.createRange();r.selectNodeContents(cl);const sel=getSelection();sel.removeAllRanges();sel.addRange(r)},0)});
+    cl.addEventListener('blur',()=>{const t=cl.textContent.replace(/\s+/g,' ').trim(); cl.textContent=t||D.cliente; try{localStorage.setItem('take3.cliente',cl.textContent)}catch(_){}});
+    cl.addEventListener('paste',e=>{e.preventDefault();document.execCommand('insertText',false,(e.clipboardData.getData('text/plain')||'').replace(/\s+/g,' '))});
+  }
+  document.querySelectorAll('[data-edit]').forEach(el=>{
+    const k='take3.orc.'+el.dataset.edit;
+    try{const v=localStorage.getItem(k); if(v!==null&&v.trim()) el.textContent=v}catch(_){}
+    el.addEventListener('blur',()=>{const t=el.textContent.replace(/\s+/g,' ').trim(); el.textContent=t||el.dataset.padrao; try{localStorage.setItem(k,el.textContent)}catch(_){}});
+    el.addEventListener('paste',e=>{e.preventDefault();document.execCommand('insertText',false,(e.clipboardData.getData('text/plain')||'').replace(/\s+/g,' '))});
+  });
+  let sx=0,sy=0;
+  document.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+  document.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){dx<0?next():prev()}},{passive:true});
+
+  function fit(){const ret=innerWidth<innerHeight*0.85;document.documentElement.classList.toggle('retrato',ret);document.body.classList.toggle('retrato',ret);const W=ret?620:1600,H=ret?1100:900,w=innerWidth-(ret?12:32),h=innerHeight-(ret?12:24),k=Math.min(w/W,h/H);stage.style.transform=`scale(${k})`;stage.style.marginLeft=stage.style.marginRight=`-${W*(1-k)/2}px`;stage.style.marginTop=stage.style.marginBottom=`-${H*(1-k)/2}px`}
+  addEventListener('resize',fit); fit();
+  setTimeout(()=>document.getElementById('hint').classList.add('gone'),7000);
+
+  // ambient: deep teal ground with slow orange/yellow glows and sparks behind the stage
+  const cv=document.getElementById('bg'),ctx=cv.getContext('2d');let W,H;
+  const size=()=>{W=cv.width=innerWidth*devicePixelRatio;H=cv.height=innerHeight*devicePixelRatio};addEventListener('resize',size);size();
+  const orbs=Array.from({length:5},(_,i)=>({x:Math.random(),y:Math.random(),r:.2+Math.random()*.25,vx:(Math.random()-.5)*.0002,vy:(Math.random()-.5)*.0002,c:i%2?'255,103,0':'253,189,16'}));
+  const sparks=Array.from({length:18},()=>({x:Math.random(),y:Math.random(),r:1.2+Math.random()*2,v:.0003+Math.random()*.0006,p:Math.random()*6.28}));
+  let mx=.5,my=.5;addEventListener('pointermove',e=>{mx=e.clientX/innerWidth;my=e.clientY/innerHeight},{passive:true});
+  function draw(t){
+    ctx.clearRect(0,0,W,H);const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,'#02252d');g.addColorStop(1,'#043a47');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    orbs.forEach(o=>{o.x+=o.vx+(mx-.5)*.00006;o.y+=o.vy+(my-.5)*.00006;if(o.x<-.3)o.x=1.3;if(o.x>1.3)o.x=-.3;if(o.y<-.3)o.y=1.3;if(o.y>1.3)o.y=-.3;
+      const rr=o.r*Math.max(W,H),rg=ctx.createRadialGradient(o.x*W,o.y*H,0,o.x*W,o.y*H,rr);rg.addColorStop(0,`rgba(${o.c},.12)`);rg.addColorStop(1,`rgba(${o.c},0)`);ctx.fillStyle=rg;ctx.beginPath();ctx.arc(o.x*W,o.y*H,rr,0,6.28);ctx.fill()});
+    sparks.forEach(s=>{s.y-=s.v;s.x+=Math.sin(t/1800+s.p)*.0003;if(s.y<-.05){s.y=1.05;s.x=Math.random()}const a=.3+.3*Math.sin(t/600+s.p);
+      ctx.fillStyle=`rgba(255,${120+Math.round(80*Math.sin(s.p))},30,${a})`;ctx.shadowColor='rgba(255,122,26,.8)';ctx.shadowBlur=12*devicePixelRatio;ctx.beginPath();ctx.arc(s.x*W,s.y*H,s.r*devicePixelRatio,0,6.28);ctx.fill();ctx.shadowBlur=0});
+    if(!reduce)requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+
+  // boot
+  let start=0;try{const m=/^#s(\d+)$/.exec(location.hash);if(m)start=Math.min(total-1,Math.max(0,+m[1]-1))}catch(e){}
+  els[start].classList.add('on');cur=start;chrome();setTimeout(counters,400,els[start]);
+})();
+</script>
+</body></html>

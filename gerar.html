@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Gerador de Orçamento Take3</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap">
+<style>
+/* Gerador interno: preenche o orçamento, escolhe a validade e gera os links para o cliente. */
+:root{
+  --bg:#043a47; --panel:#0a4c5b; --campo:#073f4c; --fg:#f1f3ee; --muted:#b9cdd1; --dim:#7fa3aa;
+  --line:rgba(241,243,238,.16); --orange:#ff6700; --yellow:#fdbd10; --ink:#032a34; --ok:#2ee59d;
+  --grad:linear-gradient(135deg,#ff6700 0%,#fdbd10 100%);
+  --font:'Poppins','Segoe UI',Arial,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);-webkit-font-smoothing:antialiased}
+.wrap{max-width:860px;margin:0 auto;padding-inline:20px;padding-block:calc(26px + env(safe-area-inset-top,0px)) 48px;display:grid;gap:20px}
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+header img{height:30px}
+.eyebrow{font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--orange);font-weight:700;margin:0}
+h1{font-size:clamp(28px,6vw,40px);margin:6px 0 0;letter-spacing:-.02em;line-height:1.1}
+p.sub{color:var(--muted);margin:6px 0 0;line-height:1.55}
+form{display:grid;gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;display:grid;gap:14px;min-width:0}
+.duas{display:grid;grid-template-columns:1fr;gap:14px}
+@media (min-width:680px){.duas{grid-template-columns:1fr 1fr}}
+label{display:grid;gap:6px;font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.02em}
+small{font-weight:400;color:var(--dim)}
+input,textarea{font:500 16px var(--font);color:var(--fg);background:var(--campo);border:1px solid var(--line);border-radius:10px;padding:11px 12px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:96px;line-height:1.5}
+input:focus,textarea:focus{outline:2px solid var(--yellow);outline-offset:1px;border-color:transparent}
+.rapidos{display:flex;flex-wrap:wrap;gap:8px}
+button{font:600 15px var(--font);border-radius:10px;padding:11px 16px;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--fg)}
+button.principal{background:var(--grad);color:var(--ink);border-color:transparent;padding:14px 20px;font-size:16px}
+button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
+.validade-txt{color:var(--yellow);font-weight:600;font-size:14px}
+.saida{display:grid;gap:10px}
+.link{display:grid;gap:8px}
+.link .linha{display:flex;gap:8px;flex-wrap:wrap}
+.link input{flex:1 1 260px;font-size:14px;color:var(--muted)}
+.link a{color:var(--yellow);font-weight:600;font-size:14px;align-self:center}
+.ok{color:var(--ok);font-size:13px;font-weight:600;min-height:18px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header><img src="assets/logo-take3.svg" alt="Take3 Digital"></header>
+  <section>
+    <p class="eyebrow">Uso interno · Take3</p>
+    <h1>Gerador de orçamento</h1>
+    <p class="sub">Preencha, escolha a validade e gere o link. O cliente só visualiza: nada é editável do lado dele. Depois da data de validade, o link mostra que o orçamento expirou.</p>
+  </section>
+
+  <form id="form" novalidate>
+    <div class="card">
+      <div class="duas">
+        <label for="cliente">Cliente (marca)<input id="cliente" required maxlength="80" placeholder="Ex.: Pizzaria Di Parma"></label>
+        <label for="plano">Nome do plano<input id="plano" maxlength="80" value="Social · Plano mensal"></label>
+      </div>
+      <label for="itens">O que está incluso <small>(um item por linha)</small>
+        <textarea id="itens" rows="5">8 a 12 posts por mês + stories do calendário
+1 diária de captação por mês
+Direct respondido em até 24h úteis
+Reunião mensal com relatório de resultados
+Onboarding de 30 dias incluso no mês 01</textarea></label>
+    </div>
+
+    <div class="card">
+      <div class="duas">
+        <label for="valor">Valor<input id="valor" required maxlength="40" inputmode="decimal" placeholder="Ex.: R$ 2.500,00"></label>
+        <label for="periodo">Período<input id="periodo" maxlength="40" value="por mês"></label>
+      </div>
+      <label for="condicoes">Condições de pagamento <small>(uma por linha)</small>
+        <textarea id="condicoes" rows="3">Pagamento mensal por PIX ou boleto
+Vencimento todo dia 10
+Contrato de 6 meses · 2 primeiros de experiência</textarea></label>
+      <label for="obs">Observações da proposta <small>(opcional)</small><textarea id="obs" rows="3" maxlength="1200" placeholder="Ex.: Diária extra de captação: R$ 600,00. Início previsto para 01/11."></textarea></label>
+    </div>
+
+    <div class="card">
+      <label for="validade">Válido até<input id="validade" type="date" required></label>
+      <div class="rapidos" role="group" aria-label="Validade rápida">
+        <button type="button" data-dias="7">7 dias</button>
+        <button type="button" data-dias="15">15 dias</button>
+        <button type="button" data-dias="30">30 dias</button>
+      </div>
+      <span class="validade-txt" id="validadeTxt"></span>
+    </div>
+
+    <button class="principal" type="submit">Gerar links para o cliente</button>
+    <p class="ok" id="erro" role="alert"></p>
+  </form>
+
+  <section class="card saida" id="saida" hidden>
+    <p class="eyebrow">Links prontos</p>
+    <div class="link">
+      <label for="linkOrc">Orçamento (com validade)</label>
+      <div class="linha"><input id="linkOrc" readonly><button type="button" data-copiar="linkOrc">Copiar</button></div>
+      <a id="abrirOrc" href="#" target="_blank" rel="noopener">Abrir o orçamento →</a>
+    </div>
+    <div class="link">
+      <label for="linkProp">Apresentação do Social</label>
+      <div class="linha"><input id="linkProp" readonly><button type="button" data-copiar="linkProp">Copiar</button></div>
+      <a id="abrirProp" href="#" target="_blank" rel="noopener">Abrir a apresentação →</a>
+    </div>
+    <p class="ok" id="copiado"></p>
+  </section>
+</main>
+<script>
+(function(){
+  'use strict';
+  var SAL = 'take3-social-2026';
+  function hash(str){ var h = 0x811c9dc5; for (var i = 0; i < str.length; i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return ('0000000' + h.toString(16)).slice(-8); }
+  function codificar(obj){ var bytes = new TextEncoder().encode(JSON.stringify(obj)), bin = ''; for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]); return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+  function iso(d){ return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function dataBR(s){ var p = s.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
+  var $ = function(id){ return document.getElementById(id); };
+  var linhas = function(id){ return $(id).value.split('\n').map(function(x){ return x.trim(); }).filter(Boolean); };
+
+  function definirValidade(dias){ var d = new Date(); d.setDate(d.getDate() + dias); $('validade').value = iso(d); mostrarValidade(); }
+  function mostrarValidade(){ var v = $('validade').value; $('validadeTxt').textContent = v ? 'O link vale até ' + dataBR(v) + ' (inclusive).' : ''; }
+  document.querySelectorAll('[data-dias]').forEach(function(b){ b.addEventListener('click', function(){ definirValidade(+b.dataset.dias); }); });
+  $('validade').addEventListener('change', mostrarValidade);
+  definirValidade(15);
+
+  var base = location.href.replace(/[?#].*$/, '').replace(/[^/]*$/, '');
+  $('form').addEventListener('submit', function(e){
+    e.preventDefault();
+    var c = $('cliente').value.trim(), v = $('valor').value.trim(), val = $('validade').value;
+    if (!c || !v || !val){ $('erro').textContent = 'Preencha o cliente, o valor e a validade.'; return; }
+    if (val < iso(new Date())){ $('erro').textContent = 'A validade precisa ser hoje ou uma data futura.'; return; }
+    $('erro').textContent = '';
+    var dados = { c: c, pl: $('plano').value.trim(), it: linhas('itens'), v: v, pe: $('periodo').value.trim(), co: linhas('condicoes'), o: $('obs').value.trim(), val: val, em: iso(new Date()) };
+    var p = codificar(dados);
+    var orc = base + 'orcamento.html?p=' + p + '&k=' + hash(SAL + p);
+    var prop = base + 'index.html?para=' + encodeURIComponent(c);
+    $('linkOrc').value = orc; $('abrirOrc').href = orc;
+    $('linkProp').value = prop; $('abrirProp').href = prop;
+    $('saida').hidden = false; $('copiado').textContent = '';
+    $('saida').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  document.querySelectorAll('[data-copiar]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var campo = $(b.dataset.copiar);
+      var ok = function(){ $('copiado').textContent = 'Link copiado. Agora é só colar na conversa com o cliente.'; };
+      if (navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(campo.value).then(ok, function(){ campo.select(); document.execCommand('copy'); ok(); }); }
+      else { campo.select(); document.execCommand('copy'); ok(); }
+    });
+  });
+})();
+</script>
+</body>
+</html>
