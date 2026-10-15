@@ -176,8 +176,9 @@ Contrato de 6 meses · 2 primeiros de experiência</textarea></label>
       <summary>Ligar o envio direto pelo seu Gmail (uma vez só, 5 minutos)</summary>
       <ol class="passos">
         <li>Entre em <b>script.google.com</b> com a conta Google que vai enviar e clique em <b>Novo projeto</b>.</li>
-        <li>Apague o que estiver lá, cole o código abaixo e troque <b>troque-esta-senha</b> por uma senha só sua.</li>
-        <li>Clique em <b>Implantar → Nova implantação</b>, escolha <b>App da Web</b>, em "Executar como" deixe <b>Eu</b> e em "Quem pode acessar" escolha <b>Qualquer pessoa</b>. Clique em Implantar e autorize com a sua conta.</li>
+        <li><b>Apague tudo</b> o que vier no editor (Ctrl+A e Delete, inclusive o <i>function myFunction</i>), cole o código abaixo e troque <b>troque-esta-senha</b> por uma senha só sua. Salve com Ctrl+S.</li>
+        <li>No topo, ao lado de Executar, escolha a função <b>autorizar</b> e clique em <b>Executar</b>. Autorize com a sua conta (se aparecer "app não verificado": Avançado → Acessar). Se aparecer "OAuth client is not fully created yet", o projeto ainda está sendo criado pelo Google: espere 5 minutos e tente de novo.</li>
+        <li>Clique em <b>Implantar → Nova implantação</b>, escolha <b>App da Web</b>, em "Executar como" deixe <b>Eu</b> e em "Quem pode acessar" escolha <b>Qualquer pessoa</b>. Clique em Implantar.</li>
         <li>Copie a <b>URL do app da Web</b> e cole aqui embaixo junto com a senha. Clique em Testar.</li>
       </ol>
       <pre class="codigo" id="codigoScript"></pre>
@@ -319,6 +320,12 @@ Contrato de 6 meses · 2 primeiros de experiência</textarea></label>
     '// Take3 · envio direto pelo seu Gmail (Google Apps Script)',
     '// Troque a senha abaixo por uma só sua e use a mesma no gerador.',
     "var SENHA = 'troque-esta-senha';",
+    '',
+    '// Rode esta uma vez (selecione autorizar e clique em Executar) para dar a permissão.',
+    'function autorizar() {',
+    "  Logger.log('Tudo certo. Hoje ainda dá para enviar ' + MailApp.getRemainingDailyQuota() + ' e-mails.');",
+    '  GmailApp.getInboxUnreadCount();',
+    '}',
     '',
     'function doPost(e) {',
     '  var r;',
