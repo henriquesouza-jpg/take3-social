@@ -179,7 +179,8 @@ Contrato de 6 meses · 2 primeiros de experiência</textarea></label>
         <li><b>Apague tudo</b> o que vier no editor (Ctrl+A e Delete, inclusive o <i>function myFunction</i>), cole o código abaixo e troque <b>troque-esta-senha</b> por uma senha só sua. Salve com Ctrl+S.</li>
         <li>No topo, ao lado de Executar, escolha a função <b>autorizar</b> e clique em <b>Executar</b>. Autorize com a sua conta (se aparecer "app não verificado": Avançado → Acessar). Se aparecer "OAuth client is not fully created yet", o projeto ainda está sendo criado pelo Google: espere 5 minutos e tente de novo.</li>
         <li>Clique em <b>Implantar → Nova implantação</b>, escolha <b>App da Web</b>, em "Executar como" deixe <b>Eu</b> e em "Quem pode acessar" escolha <b>Qualquer pessoa</b>. Clique em Implantar.</li>
-        <li>Copie a <b>URL do app da Web</b> e cole aqui embaixo junto com a senha. Clique em Testar.</li>
+        <li>Copie a <b>URL do app da Web</b> (termina em <b>/exec</b>) e abra numa aba anônima: tem que aparecer <b>Envio direto Take3: funcionando</b>. Depois cole aqui embaixo junto com a senha e clique em Salvar e testar.</li>
+        <li>Mudou o código depois? A implantação não atualiza sozinha: <b>Implantar → Gerenciar implantações → lápis → Versão: Nova versão → Implantar</b> (a URL continua a mesma).</li>
       </ol>
       <pre class="codigo" id="codigoScript"></pre>
       <div class="rapidos" style="margin-top:8px"><button type="button" id="copiarScript">Copiar o código</button></div>
@@ -327,6 +328,11 @@ Contrato de 6 meses · 2 primeiros de experiência</textarea></label>
     '  GmailApp.getInboxUnreadCount();',
     '}',
     '',
+    '// Abrir a URL do app no navegador mostra esta mensagem: serve para conferir.',
+    'function doGet() {',
+    "  return ContentService.createTextOutput('Envio direto Take3: funcionando. Agora cole esta URL no gerador.');",
+    '}',
+    '',
     'function doPost(e) {',
     '  var r;',
     '  try {',
@@ -363,7 +369,7 @@ Contrato de 6 meses · 2 primeiros de experiência</textarea></label>
   function postar(dados){
     return fetch(lerLS('take3.dirUrl', ''), { method: 'POST', body: JSON.stringify(Object.assign({ senha: lerLS('take3.dirSenha', ''), remetente: lerLS('take3.dirNome', 'Take3 Digital') }, dados)) })
       .then(function(r){ return r.json(); })
-      .catch(function(){ return { ok: false, erro: 'Não consegui falar com o script. Confira a URL e se a implantação está como "Qualquer pessoa".' }; });
+      .catch(function(){ return { ok: false, erro: 'Não consegui falar com o script. Abra a URL numa aba anônima: tem que aparecer "Envio direto Take3: funcionando". Se pedir login, a implantação não está como "Qualquer pessoa". Se mostrar outra coisa, publique uma nova versão (Implantar → Gerenciar implantações → lápis → Nova versão). A URL termina em /exec.' }; });
   }
   $('dirTestar').addEventListener('click', function(){
     var url = $('dirUrl').value.trim();
