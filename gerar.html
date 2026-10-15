@@ -55,6 +55,17 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
 .item .acts a{color:var(--yellow);font-weight:600;text-decoration:none;border:1px solid var(--line);border-radius:10px}
 .vazio{color:var(--dim);font-size:14px;margin:0}
 .btn-arquivo{display:inline-flex;align-items:center;font:600 15px var(--font);border-radius:10px;padding:11px 16px;cursor:pointer;border:1px solid var(--line);color:var(--fg)}
+.mail{display:grid;gap:12px;border-top:1px solid var(--line);padding-top:16px;margin-top:4px}
+.mail .botoes{display:flex;flex-wrap:wrap;gap:8px}
+button.gmail{background:var(--grad);color:var(--ink);border-color:transparent}
+.fila{display:grid;gap:8px}
+.contato{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--campo)}
+.contato .quem{flex:1 1 220px;min-width:0;overflow-wrap:anywhere}
+.contato .quem b{display:block;font-size:14px}
+.contato .quem span{font-size:13px;color:var(--muted)}
+.contato.feito{opacity:.6}
+.contato .marca{font-size:12px;font-weight:700;color:var(--ok);letter-spacing:.04em}
+.dica{font-size:13px;color:var(--dim);margin:0;line-height:1.5}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -121,6 +132,33 @@ Contrato de 6 meses · 2 primeiros de experiência</textarea></label>
       <a id="abrirProp" href="#" target="_blank" rel="noopener">Abrir a apresentação →</a>
     </div>
     <p class="ok" id="copiado"></p>
+    <div class="mail" id="mailBox">
+      <p class="eyebrow">Enviar por e-mail</p>
+      <label for="mailPara">E-mail do cliente <small>(mais de um: separe por vírgula)</small><input id="mailPara" type="email" multiple autocomplete="off" placeholder="contato@cliente.com.br"></label>
+      <label for="mailAssunto">Assunto<input id="mailAssunto" maxlength="160"></label>
+      <label for="mailTexto">Mensagem <small>(pode editar; {cliente}, {apresentacao}, {orcamento} e {validade} são trocados sozinhos)</small><textarea id="mailTexto" rows="9"></textarea></label>
+      <div class="botoes">
+        <button type="button" class="gmail" id="abrirGmail">Abrir no Gmail pronto para enviar</button>
+        <button type="button" id="abrirApp">Abrir no app de e-mail</button>
+        <button type="button" id="salvarModelo">Salvar esta mensagem como padrão</button>
+      </div>
+      <p class="dica">O e-mail sai da sua conta: o Gmail abre com tudo preenchido e você só confere e clica em Enviar.</p>
+      <p class="ok" id="mailMsg"></p>
+    </div>
+  </section>
+
+  <section class="card" id="disparo">
+    <div>
+      <p class="eyebrow">Disparo para vários contatos</p>
+      <p class="sub" style="margin-top:4px;font-size:13px">Cada pessoa recebe a apresentação do Social com o nome dela. Cole a lista, prepare e vá abrindo um por um.</p>
+    </div>
+    <label for="dispLista">Contatos <small>(um por linha: Nome; e-mail)</small><textarea id="dispLista" rows="5" placeholder="Pizzaria Di Parma; contato@diparma.com.br&#10;Burger do Zé; ze@burgerdoze.com"></textarea></label>
+    <label for="dispAssunto">Assunto<input id="dispAssunto" maxlength="160"></label>
+    <label for="dispTexto">Mensagem <small>({nome} vira o nome da pessoa e {link} a apresentação com o nome dela)</small><textarea id="dispTexto" rows="8"></textarea></label>
+    <label for="conta">Conta do Gmail que envia <small>(opcional, se você usa mais de uma · fica salva)</small><input id="conta" type="email" autocomplete="email" placeholder="voce@take3digital.com.br"></label>
+    <div class="rapidos"><button type="button" class="gmail" id="dispPreparar">Preparar disparo</button><button type="button" id="dispProximo" hidden>Abrir o próximo no Gmail</button></div>
+    <p class="ok" id="dispMsg"></p>
+    <div class="fila" id="dispFila"></div>
   </section>
 
   <section class="card" id="historico">
@@ -187,9 +225,91 @@ Contrato de 6 meses · 2 primeiros de experiência</textarea></label>
     $('linkOrc').value = orc; $('abrirOrc').href = orc;
     $('linkProp').value = prop; $('abrirProp').href = prop;
     $('saida').hidden = false; $('copiado').textContent = '';
-    guardar({ id: Date.now().toString(36), cliente: c, valor: dados.v, validade: val, emitido: iso(new Date()), link: orc, proposta: prop });
+    atual = { id: Date.now().toString(36), cliente: c, valor: dados.v, validade: val, emitido: iso(new Date()), link: orc, proposta: prop };
+    guardar(atual);
+    prepararMail(atual);
     $('saida').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
+
+  // ── E-mail: abre o Gmail (ou o app de e-mail) já preenchido. A página é
+  // estática, então quem envia é a conta do próprio usuário, com um clique.
+  var atual = null;
+  var MODELO_ORC = 'Olá, {cliente}!\n\nConforme conversamos, segue a proposta do Social da Take3.\n\nApresentação: {apresentacao}\nOrçamento: {orcamento}\n\nO orçamento vale até {validade}.\n\nQualquer dúvida, é só responder este e-mail.\n\nAbraço,\nEquipe Take3 Digital';
+  var MODELO_DISP = 'Olá, {nome}!\n\nPreparamos uma apresentação rápida de como o Social da Take3 funciona para marcas como a sua:\n\n{link}\n\nSe fizer sentido, responda este e-mail que montamos um orçamento sob medida.\n\nAbraço,\nEquipe Take3 Digital';
+  function lerLS(k, padrao){ try { return localStorage.getItem(k) || padrao; } catch (e) { return padrao; } }
+  function gravarLS(k, v){ try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+  function trocar(t, mapa){ return t.replace(/\{(\w+)\}/g, function(m, k){ return Object.prototype.hasOwnProperty.call(mapa, k) ? mapa[k] : m; }); }
+  function emails(t){ return String(t || '').split(/[,;\s]+/).map(function(x){ return x.trim(); }).filter(function(x){ return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(x); }); }
+  function urlGmail(para, assunto, corpo){
+    var conta = ($('conta').value || '').trim();
+    var pre = 'https://mail.google.com/mail/' + (conta ? 'u/' + encodeURIComponent(conta) + '/' : '');
+    return pre + '?view=cm&fs=1&to=' + encodeURIComponent(para) + '&su=' + encodeURIComponent(assunto) + '&body=' + encodeURIComponent(corpo);
+  }
+  function urlApp(para, assunto, corpo){ return 'mailto:' + encodeURIComponent(para).replace(/%40/g, '@').replace(/%2C/g, ',') + '?subject=' + encodeURIComponent(assunto) + '&body=' + encodeURIComponent(corpo); }
+  function abrir(url){ var w = window.open(url, '_blank', 'noopener'); if (!w) location.href = url; }
+  $('conta').value = lerLS('take3.conta', '');
+  $('conta').addEventListener('change', function(){ gravarLS('take3.conta', $('conta').value.trim()); });
+
+  function prepararMail(o){
+    $('mailPara').value = o.email || '';
+    $('mailAssunto').value = 'Proposta Social Take3 · ' + o.cliente;
+    $('mailTexto').value = trocar(lerLS('take3.modeloOrc', MODELO_ORC), { cliente: o.cliente, apresentacao: o.proposta, orcamento: o.link, validade: dataBR(o.validade) });
+    $('mailMsg').textContent = '';
+  }
+  function enviarAtual(via){
+    if (!atual){ $('mailMsg').textContent = 'Gere os links primeiro.'; return; }
+    var para = emails($('mailPara').value);
+    if (!para.length){ $('mailMsg').textContent = 'Digite o e-mail do cliente.'; $('mailPara').focus(); return; }
+    var corpo = $('mailTexto').value, assunto = $('mailAssunto').value.trim();
+    abrir(via === 'app' ? urlApp(para.join(','), assunto, corpo) : urlGmail(para.join(','), assunto, corpo));
+    var xs = ler(); xs.forEach(function(x){ if (x.id === atual.id){ x.email = para.join(', '); x.enviadoEm = iso(new Date()); } }); gravar(xs); render();
+    $('mailMsg').textContent = 'Abrimos o e-mail pronto. Confira e clique em Enviar.';
+  }
+  $('abrirGmail').addEventListener('click', function(){ enviarAtual('gmail'); });
+  $('abrirApp').addEventListener('click', function(){ enviarAtual('app'); });
+  $('salvarModelo').addEventListener('click', function(){
+    if (!atual) return;
+    // Guarda o modelo com os marcadores de volta no lugar dos links deste cliente.
+    var t = $('mailTexto').value.split(atual.proposta).join('{apresentacao}').split(atual.link).join('{orcamento}').split(dataBR(atual.validade)).join('{validade}').split(atual.cliente).join('{cliente}');
+    $('mailMsg').textContent = gravarLS('take3.modeloOrc', t) ? 'Mensagem salva como padrão para os próximos orçamentos.' : 'Este navegador não deixou salvar.';
+  });
+
+  // ── Disparo para vários contatos: uma janela do Gmail por pessoa (o navegador
+  // não deixa abrir várias de uma vez), cada uma com o link no nome dela.
+  var fila = [];
+  $('dispAssunto').value = lerLS('take3.dispAssunto', 'Como o Social da Take3 funciona para a sua marca');
+  $('dispTexto').value = lerLS('take3.modeloDisp', MODELO_DISP);
+  function linkPara(nome){ var ig = perfis($('ig').value).join('|'); return base + 'index.html?para=' + encodeURIComponent(nome) + (ig ? '&ig=' + encodeURIComponent(ig) : ''); }
+  function renderFila(){
+    $('dispFila').innerHTML = fila.map(function(x, i){
+      return '<div class="contato' + (x.feito ? ' feito' : '') + '"><div class="quem"><b>' + esc(x.nome) + '</b><span>' + esc(x.email) + '</span></div>' +
+        (x.feito ? '<span class="marca">ABERTO ✓</span>' : '') + '<button type="button" data-disp="' + i + '">' + (x.feito ? 'Abrir de novo' : 'Abrir no Gmail') + '</button></div>';
+    }).join('');
+    var falta = fila.filter(function(x){ return !x.feito; }).length;
+    $('dispProximo').hidden = !fila.length || !falta;
+    $('dispMsg').textContent = fila.length ? (falta ? falta + ' de ' + fila.length + ' para abrir.' : 'Todos abertos. Confira se clicou em Enviar em cada um.') : '';
+  }
+  function abrirContato(i){
+    var x = fila[i]; if (!x) return;
+    var corpo = trocar($('dispTexto').value, { nome: x.nome, link: linkPara(x.nome) });
+    abrir(urlGmail(x.email, trocar($('dispAssunto').value.trim(), { nome: x.nome }), corpo));
+    x.feito = true; renderFila();
+  }
+  $('dispPreparar').addEventListener('click', function(){
+    var erros = 0, vistos = {};
+    fila = $('dispLista').value.split('\n').map(function(l){ return l.trim(); }).filter(Boolean).map(function(l){
+      var p = l.split(/[;\t]/), email = emails(p[1] || p[0])[0], nome = (p.length > 1 ? p[0] : '').trim();
+      if (!email || vistos[email.toLowerCase()]){ erros++; return null; }
+      vistos[email.toLowerCase()] = 1;
+      return { nome: nome || email.split('@')[0], email: email, feito: false };
+    }).filter(Boolean);
+    gravarLS('take3.dispAssunto', $('dispAssunto').value); gravarLS('take3.modeloDisp', $('dispTexto').value);
+    renderFila();
+    if (!fila.length) $('dispMsg').textContent = 'Nenhum contato válido. Use uma linha por pessoa: Nome; e-mail';
+    else if (erros) $('dispMsg').textContent += ' (' + erros + ' linha' + (erros > 1 ? 's' : '') + ' ignorada' + (erros > 1 ? 's' : '') + ': sem e-mail válido ou repetida)';
+  });
+  $('dispProximo').addEventListener('click', function(){ for (var i = 0; i < fila.length; i++) if (!fila[i].feito){ abrirContato(i); return; } });
+  $('dispFila').addEventListener('click', function(e){ var b = e.target.closest('[data-disp]'); if (b) abrirContato(+b.dataset.disp); });
 
   // Histórico: só neste navegador (localStorage). Nada vai para o site.
   var CHAVE = 'take3.orcamentos.v1';
@@ -204,9 +324,9 @@ Contrato de 6 meses · 2 primeiros de experiência</textarea></label>
     if (!xs.length){ $('lista').innerHTML = '<p class="vazio">' + (termo ? 'Nenhum orçamento para essa busca.' : 'Os orçamentos que você gerar aparecem aqui.') + '</p>'; return; }
     $('lista').innerHTML = xs.map(function(o){
       var exp = o.validade < hoje;
-      return '<div class="item"><div><b>' + esc(o.cliente) + '</b><div class="meta">' + esc(/^\d/.test(o.valor) ? Number(o.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : o.valor) + ' · emitido ' + dataBR(o.emitido) + ' · válido até ' + dataBR(o.validade) + '</div></div>' +
+      return '<div class="item"><div><b>' + esc(o.cliente) + '</b><div class="meta">' + esc(/^\d/.test(o.valor) ? Number(o.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : o.valor) + ' · emitido ' + dataBR(o.emitido) + ' · válido até ' + dataBR(o.validade) + (o.email ? ' · e-mail para ' + esc(o.email) : '') + '</div></div>' +
         '<span class="status ' + (exp ? 'expirado' : 'valido') + '">' + (exp ? 'Expirado' : 'Válido') + '</span>' +
-        '<div class="acts"><button type="button" data-acao="copiar" data-id="' + o.id + '">Copiar orçamento</button><button type="button" data-acao="prop" data-id="' + o.id + '">Copiar apresentação</button><a href="' + esc(o.link) + '" target="_blank" rel="noopener">Abrir</a><button type="button" data-acao="excluir" data-id="' + o.id + '">Excluir</button></div></div>';
+        '<div class="acts"><button type="button" data-acao="copiar" data-id="' + o.id + '">Copiar orçamento</button><button type="button" data-acao="prop" data-id="' + o.id + '">Copiar apresentação</button><button type="button" data-acao="email" data-id="' + o.id + '">Enviar por e-mail</button><a href="' + esc(o.link) + '" target="_blank" rel="noopener">Abrir</a><button type="button" data-acao="excluir" data-id="' + o.id + '">Excluir</button></div></div>';
     }).join('');
   }
   $('lista').addEventListener('click', function(e){
@@ -214,6 +334,12 @@ Contrato de 6 meses · 2 primeiros de experiência</textarea></label>
     var xs = ler(), o = xs.filter(function(x){ return x.id === b.dataset.id; })[0]; if (!o) return;
     if (b.dataset.acao === 'copiar') copiar(o.link, 'Link do orçamento de ' + o.cliente + ' copiado.');
     else if (b.dataset.acao === 'prop') copiar(o.proposta, 'Link da apresentação de ' + o.cliente + ' copiado.');
+    else if (b.dataset.acao === 'email'){
+      atual = o; prepararMail(o);
+      $('linkOrc').value = o.link; $('abrirOrc').href = o.link; $('linkProp').value = o.proposta; $('abrirProp').href = o.proposta;
+      $('saida').hidden = false; $('copiado').textContent = '';
+      $('mailBox').scrollIntoView({ behavior: 'smooth', block: 'start' }); $('mailPara').focus();
+    }
     else if (b.dataset.acao === 'excluir'){
       if (b.dataset.confirmar !== '1'){ b.dataset.confirmar = '1'; b.textContent = 'Confirmar exclusão'; return; }
       gravar(xs.filter(function(x){ return x.id !== o.id; })); render(); $('histMsg').textContent = 'Removido do histórico. O link enviado continua valendo até a validade.';
