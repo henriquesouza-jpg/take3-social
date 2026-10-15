@@ -66,6 +66,15 @@ button.gmail{background:var(--grad);color:var(--ink);border-color:transparent}
 .contato.feito{opacity:.6}
 .contato .marca{font-size:12px;font-weight:700;color:var(--ok);letter-spacing:.04em}
 .dica{font-size:13px;color:var(--dim);margin:0;line-height:1.5}
+details.config{min-width:0;max-width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--campo)}
+details.config summary{cursor:pointer;font-weight:600;font-size:14px}
+details.config[open] summary{margin-bottom:12px}
+details.config .passos{margin:0 0 12px;padding-left:18px;font-size:13px;color:var(--muted);line-height:1.6}
+pre.codigo{margin:0;max-width:100%;min-width:0;max-height:220px;overflow:auto;background:#032a34;border:1px solid var(--line);border-radius:10px;padding:12px;font:12px/1.5 ui-monospace,Consolas,monospace;color:#d7e6e8;white-space:pre}
+.contato .marca.erro{color:#ff8080}
+.estado-direto{font-size:13px;font-weight:600}
+.estado-direto.on{color:var(--ok)}
+.estado-direto.off{color:var(--dim)}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -138,11 +147,12 @@ Contrato de 6 meses · 2 primeiros de experiência</textarea></label>
       <label for="mailAssunto">Assunto<input id="mailAssunto" maxlength="160"></label>
       <label for="mailTexto">Mensagem <small>(pode editar; {cliente}, {apresentacao}, {orcamento} e {validade} são trocados sozinhos)</small><textarea id="mailTexto" rows="9"></textarea></label>
       <div class="botoes">
+        <button type="button" class="gmail" id="enviarDireto" hidden>Enviar agora</button>
         <button type="button" class="gmail" id="abrirGmail">Abrir no Gmail pronto para enviar</button>
         <button type="button" id="abrirApp">Abrir no app de e-mail</button>
         <button type="button" id="salvarModelo">Salvar esta mensagem como padrão</button>
       </div>
-      <p class="dica">O e-mail sai da sua conta: o Gmail abre com tudo preenchido e você só confere e clica em Enviar.</p>
+      <p class="dica" id="dicaMail">O e-mail sai da sua conta: o Gmail abre com tudo preenchido e você só confere e clica em Enviar. Para enviar sem abrir o Gmail, ligue o envio direto no card "Disparo para vários contatos".</p>
       <p class="ok" id="mailMsg"></p>
     </div>
   </section>
@@ -150,15 +160,37 @@ Contrato de 6 meses · 2 primeiros de experiência</textarea></label>
   <section class="card" id="disparo">
     <div>
       <p class="eyebrow">Disparo para vários contatos</p>
-      <p class="sub" style="margin-top:4px;font-size:13px">Cada pessoa recebe a apresentação do Social com o nome dela. Cole a lista, prepare e vá abrindo um por um.</p>
+      <p class="sub" style="margin-top:4px;font-size:13px">Cada pessoa recebe o e-mail com o nome dela. Com o envio direto ligado, o disparo sai sozinho pelo seu Gmail; sem ele, o Gmail abre um por um para você clicar em Enviar.</p>
+      <p class="estado-direto off" id="estadoDireto">Envio direto: desligado</p>
     </div>
     <label for="dispLista">Contatos <small>(um por linha: Nome; e-mail)</small><textarea id="dispLista" rows="5" placeholder="Pizzaria Di Parma; contato@diparma.com.br&#10;Burger do Zé; ze@burgerdoze.com"></textarea></label>
     <label for="dispAssunto">Assunto<input id="dispAssunto" maxlength="160"></label>
-    <label for="dispTexto">Mensagem <small>({nome} vira o nome da pessoa e {link} a apresentação com o nome dela)</small><textarea id="dispTexto" rows="8"></textarea></label>
+    <label for="dispTexto">Mensagem <small>({nome} vira o nome da pessoa · {link}, se usar, vira a apresentação do Social com o nome dela)</small><textarea id="dispTexto" rows="12"></textarea></label>
+    <div class="rapidos"><button type="button" id="modeloAcelera">Usar o modelo Acelera Food</button><button type="button" id="modeloSeguimento">Usar o modelo de 2º contato</button></div>
     <label for="conta">Conta do Gmail que envia <small>(opcional, se você usa mais de uma · fica salva)</small><input id="conta" type="email" autocomplete="email" placeholder="voce@take3digital.com.br"></label>
-    <div class="rapidos"><button type="button" class="gmail" id="dispPreparar">Preparar disparo</button><button type="button" id="dispProximo" hidden>Abrir o próximo no Gmail</button></div>
+    <div class="rapidos"><button type="button" class="gmail" id="dispPreparar">Preparar disparo</button><button type="button" class="gmail" id="dispTodos" hidden>Disparar para todos agora</button><button type="button" id="dispProximo" hidden>Abrir o próximo no Gmail</button></div>
     <p class="ok" id="dispMsg"></p>
     <div class="fila" id="dispFila"></div>
+
+    <details class="config" id="cfgDireto">
+      <summary>Ligar o envio direto pelo seu Gmail (uma vez só, 5 minutos)</summary>
+      <ol class="passos">
+        <li>Entre em <b>script.google.com</b> com a conta Google que vai enviar e clique em <b>Novo projeto</b>.</li>
+        <li>Apague o que estiver lá, cole o código abaixo e troque <b>troque-esta-senha</b> por uma senha só sua.</li>
+        <li>Clique em <b>Implantar → Nova implantação</b>, escolha <b>App da Web</b>, em "Executar como" deixe <b>Eu</b> e em "Quem pode acessar" escolha <b>Qualquer pessoa</b>. Clique em Implantar e autorize com a sua conta.</li>
+        <li>Copie a <b>URL do app da Web</b> e cole aqui embaixo junto com a senha. Clique em Testar.</li>
+      </ol>
+      <pre class="codigo" id="codigoScript"></pre>
+      <div class="rapidos" style="margin-top:8px"><button type="button" id="copiarScript">Copiar o código</button></div>
+      <div class="duas" style="margin-top:12px">
+        <label for="dirUrl">URL do app da Web<input id="dirUrl" type="url" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off"></label>
+        <label for="dirSenha">Senha que você colocou no código<input id="dirSenha" type="password" autocomplete="off"></label>
+      </div>
+      <label for="dirNome" style="margin-top:12px">Nome que aparece como remetente<input id="dirNome" maxlength="80" value="Take3 Digital"></label>
+      <div class="rapidos" style="margin-top:12px"><button type="button" class="gmail" id="dirTestar">Salvar e testar</button><button type="button" id="dirDesligar">Desligar</button></div>
+      <p class="dica" style="margin-top:8px">A URL e a senha ficam só neste navegador, nunca no site. Sem a senha ninguém consegue usar o seu envio. O Gmail comum envia até 100 e-mails por dia por esse caminho (Google Workspace, 1.500).</p>
+      <p class="ok" id="dirMsg"></p>
+    </details>
   </section>
 
   <section class="card" id="historico">
@@ -235,7 +267,10 @@ Contrato de 6 meses · 2 primeiros de experiência</textarea></label>
   // estática, então quem envia é a conta do próprio usuário, com um clique.
   var atual = null;
   var MODELO_ORC = 'Olá, {cliente}!\n\nConforme conversamos, segue a proposta do Social da Take3.\n\nApresentação: {apresentacao}\nOrçamento: {orcamento}\n\nO orçamento vale até {validade}.\n\nQualquer dúvida, é só responder este e-mail.\n\nAbraço,\nEquipe Take3 Digital';
-  var MODELO_DISP = 'Olá, {nome}!\n\nPreparamos uma apresentação rápida de como o Social da Take3 funciona para marcas como a sua:\n\n{link}\n\nSe fizer sentido, responda este e-mail que montamos um orçamento sob medida.\n\nAbraço,\nEquipe Take3 Digital';
+  var MODELO_DISP = 'Olá, {nome}, tudo bem?\n\nAqui é da Take3 Digital, de Uberlândia. Há 3 anos trabalhamos só com restaurantes e deliveries, e vimos um padrão: a maioria não trava por falta de anúncio. Trava porque o tráfego chega e o cardápio não converte, porque o pedido entra e a operação não dá conta, porque a promoção enche o dia e esvazia o caixa, ou porque o cliente compra uma vez e não volta.\n\nPor isso criamos o Acelera Food, uma metodologia de crescimento para food service com 4 pilares trabalhando juntos:\n\n- Aquisição: anúncios no Meta e Google medindo quanto custou cada cliente novo\n- Conversão: cardápio, oferta e entrega ajustados para o pedido fechar\n- Retenção: CRM próprio que faz o cliente comprar de novo\n- Growth: todo mês um diagnóstico e um plano com a maior alavanca do negócio\n\nTudo com a conta fechada: nenhuma campanha é avaliada só pelo faturamento, e sim pelo que sobra no caixa.\n\nAlguns resultados:\n- Happy Pizza (Araguari): R$ 42.608 de receita em uma única campanha, com R$ 1.325 investidos em mídia\n- Pizzaria Di Parma: mais de 800 pedidos em um dia de campanha, a ponto de pausar o cardápio porque a cozinha não dava conta\n\nSe fizer sentido, responda este e-mail com o melhor dia e horário para uma conversa de 20 minutos. Faço um diagnóstico rápido do delivery de vocês, sem compromisso.\n\nAbraço,\nEquipe Take3 Digital';
+  var ASSUNTO_DISP = '{nome}: o que trava o crescimento de um delivery';
+  var MODELO_SEG = 'Olá, {nome}!\n\nPassando para saber se viu meu e-mail sobre o Acelera Food, a metodologia de crescimento da Take3 para restaurantes e deliveries.\n\nSe quiser, faço o diagnóstico do delivery de vocês em uma conversa de 20 minutos e mostro onde está o maior gargalo hoje: aquisição, conversão, margem ou recompra.\n\nÉ só responder com o melhor dia e horário.\n\nAbraço,\nEquipe Take3 Digital';
+  var ASSUNTO_SEG = 'Re: {nome}: o que trava o crescimento de um delivery';
   function lerLS(k, padrao){ try { return localStorage.getItem(k) || padrao; } catch (e) { return padrao; } }
   function gravarLS(k, v){ try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
   function trocar(t, mapa){ return t.replace(/\{(\w+)\}/g, function(m, k){ return Object.prototype.hasOwnProperty.call(mapa, k) ? mapa[k] : m; }); }
@@ -277,17 +312,120 @@ Contrato de 6 meses · 2 primeiros de experiência</textarea></label>
   // ── Disparo para vários contatos: uma janela do Gmail por pessoa (o navegador
   // não deixa abrir várias de uma vez), cada uma com o link no nome dela.
   var fila = [];
-  $('dispAssunto').value = lerLS('take3.dispAssunto', 'Como o Social da Take3 funciona para a sua marca');
+  $('dispAssunto').value = lerLS('take3.dispAssunto', ASSUNTO_DISP);
   $('dispTexto').value = lerLS('take3.modeloDisp', MODELO_DISP);
   function linkPara(nome){ var ig = perfis($('ig').value).join('|'); return base + 'index.html?para=' + encodeURIComponent(nome) + (ig ? '&ig=' + encodeURIComponent(ig) : ''); }
+  var SCRIPT = [
+    '// Take3 · envio direto pelo seu Gmail (Google Apps Script)',
+    '// Troque a senha abaixo por uma só sua e use a mesma no gerador.',
+    "var SENHA = 'troque-esta-senha';",
+    '',
+    'function doPost(e) {',
+    '  var r;',
+    '  try {',
+    '    var d = JSON.parse(e.postData.contents);',
+    "    if (SENHA === 'troque-esta-senha' || d.senha !== SENHA) throw new Error('Senha errada.');",
+    '    if (!d.teste) {',
+    "      if (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(d.para || '')) throw new Error('E-mail inválido.');",
+    "      if (MailApp.getRemainingDailyQuota() < 1) throw new Error('Limite diário do Gmail atingido. Continue amanhã.');",
+    "      GmailApp.sendEmail(d.para, String(d.assunto || '').slice(0, 200), String(d.corpo || ''), { name: String(d.remetente || 'Take3 Digital').slice(0, 80) });",
+    '    }',
+    '    r = { ok: true, restante: MailApp.getRemainingDailyQuota() };',
+    '  } catch (err) {',
+    '    r = { ok: false, erro: String(err && err.message || err) };',
+    '  }',
+    '  return ContentService.createTextOutput(JSON.stringify(r)).setMimeType(ContentService.MimeType.JSON);',
+    '}'
+  ].join('\n');
+  $('codigoScript').textContent = SCRIPT;
+  $('copiarScript').addEventListener('click', function(){
+    var ok = function(){ $('dirMsg').textContent = 'Código copiado. Cole no script.google.com.'; };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(SCRIPT).then(ok, function(){ prompt('Copie o código:', SCRIPT); });
+    else prompt('Copie o código:', SCRIPT);
+  });
+  $('dirUrl').value = lerLS('take3.dirUrl', ''); $('dirSenha').value = lerLS('take3.dirSenha', ''); $('dirNome').value = lerLS('take3.dirNome', 'Take3 Digital');
+  function diretoLigado(){ return lerLS('take3.dirOk', '') === '1' && !!lerLS('take3.dirUrl', ''); }
+  function mostrarDireto(){
+    var on = diretoLigado();
+    $('estadoDireto').textContent = on ? 'Envio direto: ligado (sai sozinho pelo seu Gmail)' : 'Envio direto: desligado';
+    $('estadoDireto').className = 'estado-direto ' + (on ? 'on' : 'off');
+    $('enviarDireto').hidden = !on;
+    renderFila();
+  }
+  // POST simples (text/plain): o Apps Script responde com CORS liberado, sem preflight.
+  function postar(dados){
+    return fetch(lerLS('take3.dirUrl', ''), { method: 'POST', body: JSON.stringify(Object.assign({ senha: lerLS('take3.dirSenha', ''), remetente: lerLS('take3.dirNome', 'Take3 Digital') }, dados)) })
+      .then(function(r){ return r.json(); })
+      .catch(function(){ return { ok: false, erro: 'Não consegui falar com o script. Confira a URL e se a implantação está como "Qualquer pessoa".' }; });
+  }
+  $('dirTestar').addEventListener('click', function(){
+    var url = $('dirUrl').value.trim();
+    if (!/^https:\/\/script\.google(usercontent)?\.com\//.test(url) && !/^http:\/\/localhost/.test(url)){ $('dirMsg').textContent = 'Cole a URL do app da Web (começa com https://script.google.com/macros/...).'; return; }
+    gravarLS('take3.dirUrl', url); gravarLS('take3.dirSenha', $('dirSenha').value); gravarLS('take3.dirNome', $('dirNome').value.trim() || 'Take3 Digital');
+    $('dirMsg').textContent = 'Testando…';
+    postar({ teste: true }).then(function(r){
+      if (r.ok){ gravarLS('take3.dirOk', '1'); $('dirMsg').textContent = 'Ligado! Hoje ainda dá para enviar ' + r.restante + ' e-mail(s) por essa conta.'; }
+      else { gravarLS('take3.dirOk', ''); $('dirMsg').textContent = r.erro || 'Não funcionou.'; }
+      mostrarDireto();
+    });
+  });
+  $('dirDesligar').addEventListener('click', function(){ gravarLS('take3.dirOk', ''); $('dirMsg').textContent = 'Envio direto desligado. Os e-mails voltam a abrir no Gmail.'; mostrarDireto(); });
+  $('enviarDireto').addEventListener('click', function(){
+    if (!atual){ $('mailMsg').textContent = 'Gere os links primeiro.'; return; }
+    var para = emails($('mailPara').value);
+    if (!para.length){ $('mailMsg').textContent = 'Digite o e-mail do cliente.'; $('mailPara').focus(); return; }
+    var btn = this; btn.disabled = true; $('mailMsg').textContent = 'Enviando…';
+    var feitos = 0, erro = null;
+    (function proximo(i){
+      if (i >= para.length){
+        btn.disabled = false;
+        if (feitos){ var xs = ler(); xs.forEach(function(x){ if (x.id === atual.id){ x.email = para.join(', '); x.enviadoEm = iso(new Date()); } }); gravar(xs); render(); }
+        $('mailMsg').textContent = erro ? 'Não enviou: ' + erro : 'Enviado para ' + para.join(', ') + '. Está na sua pasta Enviados do Gmail.';
+        return;
+      }
+      postar({ para: para[i], assunto: $('mailAssunto').value.trim(), corpo: $('mailTexto').value }).then(function(r){ if (r.ok) feitos++; else erro = r.erro; proximo(i + 1); });
+    })(0);
+  });
+  $('modeloAcelera').addEventListener('click', function(){ $('dispAssunto').value = ASSUNTO_DISP; $('dispTexto').value = MODELO_DISP; });
+  $('modeloSeguimento').addEventListener('click', function(){ $('dispAssunto').value = ASSUNTO_SEG; $('dispTexto').value = MODELO_SEG; });
+
+  var disparando = false;
+  $('dispTodos').addEventListener('click', function(){
+    var btn = this, falta = fila.filter(function(x){ return !x.feito; });
+    if (!falta.length || disparando) return;
+    if (btn.dataset.confirmar !== '1'){ btn.dataset.confirmar = '1'; btn.textContent = 'Confirmar: enviar para ' + falta.length + ' agora'; return; }
+    btn.dataset.confirmar = ''; disparando = true; btn.disabled = true;
+    gravarLS('take3.dispAssunto', $('dispAssunto').value); gravarLS('take3.modeloDisp', $('dispTexto').value);
+    (function proximo(){
+      var i = -1; for (var k = 0; k < fila.length; k++) if (!fila[k].feito){ i = k; break; }
+      if (i < 0){ disparando = false; btn.disabled = false; renderFila(); return; }
+      var x = fila[i];
+      x.status = 'enviando'; renderFila();
+      postar({ para: x.email, assunto: trocar($('dispAssunto').value.trim(), { nome: x.nome }), corpo: trocar($('dispTexto').value, { nome: x.nome, link: linkPara(x.nome) }) }).then(function(r){
+        x.feito = true; x.status = r.ok ? 'enviado' : 'erro'; x.erro = r.ok ? '' : r.erro; if (r.ok) x.restante = r.restante;
+        renderFila();
+        // Senha errada ou limite do dia: para tudo em vez de marcar todos como falha.
+        if (!r.ok && /Senha|Limite|script/i.test(r.erro || '')){ disparando = false; btn.disabled = false; fila.forEach(function(y){ if (y.status === 'enviando') y.status = ''; }); $('dispMsg').textContent = 'Parou: ' + r.erro; return; }
+        setTimeout(proximo, 1200);
+      });
+    })();
+  });
+
   function renderFila(){
     $('dispFila').innerHTML = fila.map(function(x, i){
       return '<div class="contato' + (x.feito ? ' feito' : '') + '"><div class="quem"><b>' + esc(x.nome) + '</b><span>' + esc(x.email) + '</span></div>' +
-        (x.feito ? '<span class="marca">ABERTO ✓</span>' : '') + '<button type="button" data-disp="' + i + '">' + (x.feito ? 'Abrir de novo' : 'Abrir no Gmail') + '</button></div>';
+        (x.status === 'enviado' ? '<span class="marca">ENVIADO ✓</span>' : x.status === 'erro' ? '<span class="marca erro">FALHOU: ' + esc(x.erro) + '</span>' : x.status === 'enviando' ? '<span class="marca">enviando…</span>' : x.feito ? '<span class="marca">ABERTO ✓</span>' : '') +
+        (x.status === 'enviado' || x.status === 'enviando' ? '' : '<button type="button" data-disp="' + i + '">' + (x.feito ? 'Abrir de novo no Gmail' : 'Abrir no Gmail') + '</button>') + '</div>';
     }).join('');
-    var falta = fila.filter(function(x){ return !x.feito; }).length;
-    $('dispProximo').hidden = !fila.length || !falta;
-    $('dispMsg').textContent = fila.length ? (falta ? falta + ' de ' + fila.length + ' para abrir.' : 'Todos abertos. Confira se clicou em Enviar em cada um.') : '';
+    var falta = fila.filter(function(x){ return !x.feito; }).length, direto = diretoLigado();
+    var enviados = fila.filter(function(x){ return x.status === 'enviado'; }).length, erros = fila.filter(function(x){ return x.status === 'erro'; }).length;
+    $('dispProximo').hidden = !fila.length || !falta || direto;
+    $('dispTodos').hidden = !fila.length || !falta || !direto;
+    if (!$('dispTodos').dataset.confirmar) $('dispTodos').textContent = 'Disparar para todos agora (' + falta + ')';
+    var ultimo = fila.filter(function(x){ return x.restante != null; }).pop();
+    $('dispMsg').textContent = !fila.length ? '' : direto
+      ? (falta ? (disparando ? 'Enviando… ' : '') + enviados + ' enviado(s), ' + falta + ' na fila.' : 'Pronto: ' + enviados + ' enviado(s)' + (erros ? ', ' + erros + ' com falha' : '') + '.') + (ultimo ? ' Ainda dá para enviar ' + ultimo.restante + ' hoje.' : '')
+      : (falta ? falta + ' de ' + fila.length + ' para abrir.' : 'Todos abertos. Confira se clicou em Enviar em cada um.');
   }
   function abrirContato(i){
     var x = fila[i]; if (!x) return;
@@ -308,6 +446,7 @@ Contrato de 6 meses · 2 primeiros de experiência</textarea></label>
     if (!fila.length) $('dispMsg').textContent = 'Nenhum contato válido. Use uma linha por pessoa: Nome; e-mail';
     else if (erros) $('dispMsg').textContent += ' (' + erros + ' linha' + (erros > 1 ? 's' : '') + ' ignorada' + (erros > 1 ? 's' : '') + ': sem e-mail válido ou repetida)';
   });
+  mostrarDireto();
   $('dispProximo').addEventListener('click', function(){ for (var i = 0; i < fila.length; i++) if (!fila[i].feito){ abrirContato(i); return; } });
   $('dispFila').addEventListener('click', function(e){ var b = e.target.closest('[data-disp]'); if (b) abrirContato(+b.dataset.disp); });
 
