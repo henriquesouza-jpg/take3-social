@@ -80,7 +80,7 @@ pre.codigo{margin:0;max-width:100%;min-width:0;max-height:220px;overflow:auto;ba
 </head>
 <body>
 <main class="wrap">
-  <header><img src="assets/logo-take3.svg" alt="Take3 Digital"></header>
+  <header style="justify-content:space-between"><img src="assets/logo-take3.svg" alt="Take3 Digital"><a href="cadencia.html" style="color:var(--yellow);font-weight:600;font-size:14px;text-decoration:none">Cadência de prospecção →</a></header>
   <section>
     <p class="eyebrow">Uso interno · Take3</p>
     <h1>Gerador de orçamento</h1>
@@ -162,6 +162,7 @@ Contrato de 6 meses · 2 primeiros de experiência</textarea></label>
       <p class="eyebrow">Disparo para vários contatos</p>
       <p class="sub" style="margin-top:4px;font-size:13px">Cada pessoa recebe o e-mail com o nome dela. Com o envio direto ligado, o disparo sai sozinho pelo seu Gmail; sem ele, o Gmail abre um por um para você clicar em Enviar.</p>
       <p class="estado-direto off" id="estadoDireto">Envio direto: desligado</p>
+      <p class="dica" style="margin-top:6px">Quer uma sequência de 5 e-mails agendados, com texto próprio para cada lead? Use a <a href="cadencia.html" style="color:var(--yellow)">Cadência de prospecção</a>.</p>
     </div>
     <label for="dispLista">Contatos <small>(um por linha: Nome; e-mail)</small><textarea id="dispLista" rows="5" placeholder="Pizzaria Di Parma; contato@diparma.com.br&#10;Burger do Zé; ze@burgerdoze.com"></textarea></label>
     <label for="dispAssunto">Assunto<input id="dispAssunto" maxlength="160"></label>
@@ -208,6 +209,7 @@ Contrato de 6 meses · 2 primeiros de experiência</textarea></label>
     <p class="ok" id="histMsg"></p>
   </section>
 </main>
+<script src="script-gmail.js"></script>
 <script>
 (function(){
   'use strict';
@@ -317,39 +319,8 @@ Contrato de 6 meses · 2 primeiros de experiência</textarea></label>
   $('dispAssunto').value = lerLS('take3.dispAssunto', ASSUNTO_DISP);
   $('dispTexto').value = lerLS('take3.modeloDisp', MODELO_DISP);
   function linkPara(nome){ var ig = perfis($('ig').value).join('|'); return base + 'index.html?para=' + encodeURIComponent(nome) + (ig ? '&ig=' + encodeURIComponent(ig) : ''); }
-  var SCRIPT = [
-    '// Take3 · envio direto pelo seu Gmail (Google Apps Script)',
-    '// Troque a senha abaixo por uma só sua e use a mesma no gerador.',
-    "var SENHA = 'troque-esta-senha';",
-    '',
-    '// Rode esta uma vez (selecione autorizar e clique em Executar) para dar a permissão.',
-    'function autorizar() {',
-    "  Logger.log('Tudo certo. Hoje ainda dá para enviar ' + MailApp.getRemainingDailyQuota() + ' e-mails.');",
-    '  GmailApp.getInboxUnreadCount();',
-    '}',
-    '',
-    '// Abrir a URL do app no navegador mostra esta mensagem: serve para conferir.',
-    'function doGet() {',
-    "  return ContentService.createTextOutput('Envio direto Take3: funcionando. Agora cole esta URL no gerador.');",
-    '}',
-    '',
-    'function doPost(e) {',
-    '  var r;',
-    '  try {',
-    '    var d = JSON.parse(e.postData.contents);',
-    "    if (SENHA === 'troque-esta-senha' || d.senha !== SENHA) throw new Error('Senha errada.');",
-    '    if (!d.teste) {',
-    "      if (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(d.para || '')) throw new Error('E-mail inválido.');",
-    "      if (MailApp.getRemainingDailyQuota() < 1) throw new Error('Limite diário do Gmail atingido. Continue amanhã.');",
-    "      GmailApp.sendEmail(d.para, String(d.assunto || '').slice(0, 200), String(d.corpo || ''), { name: String(d.remetente || 'Take3 Digital').slice(0, 80) });",
-    '    }',
-    '    r = { ok: true, restante: MailApp.getRemainingDailyQuota() };',
-    '  } catch (err) {',
-    '    r = { ok: false, erro: String(err && err.message || err) };',
-    '  }',
-    '  return ContentService.createTextOutput(JSON.stringify(r)).setMimeType(ContentService.MimeType.JSON);',
-    '}'
-  ].join('\n');
+  // O código do Apps Script fica em script-gmail.js (o mesmo da página de Cadência).
+  var SCRIPT = window.TAKE3_SCRIPT_GMAIL || '';
   $('codigoScript').textContent = SCRIPT;
   $('copiarScript').addEventListener('click', function(){
     var ok = function(){ $('dirMsg').textContent = 'Código copiado. Cole no script.google.com.'; };

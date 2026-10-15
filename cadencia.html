@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Cadência de Prospecção Take3</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap">
+<style>
+/* Uso interno: sequência de e-mails de prospecção agendada pelo Gmail do usuário (Apps Script). */
+:root{
+  --bg:#043a47; --panel:#0a4c5b; --campo:#073f4c; --fg:#f1f3ee; --muted:#b9cdd1; --dim:#7fa3aa;
+  --line:rgba(241,243,238,.16); --orange:#ff6700; --yellow:#fdbd10; --ink:#032a34; --ok:#2ee59d; --bad:#ff8080;
+  --grad:linear-gradient(135deg,#ff6700 0%,#fdbd10 100%);
+  --font:'Poppins','Segoe UI',Arial,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);-webkit-font-smoothing:antialiased}
+.wrap{max-width:980px;margin:0 auto;padding-inline:20px;padding-block:calc(26px + env(safe-area-inset-top,0px)) 56px;display:grid;gap:20px}
+header{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+header img{height:30px}
+header a{color:var(--yellow);font-weight:600;font-size:14px;text-decoration:none}
+.eyebrow{font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--orange);font-weight:700;margin:0}
+h1{font-size:clamp(28px,6vw,40px);margin:6px 0 0;letter-spacing:-.02em;line-height:1.1;text-wrap:balance}
+h2{font-size:19px;margin:4px 0 0;letter-spacing:-.01em}
+p.sub{color:var(--muted);margin:6px 0 0;line-height:1.55}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;display:grid;gap:14px;min-width:0}
+.passo{display:flex;align-items:center;gap:10px}
+.passo .n{flex:none;width:30px;height:30px;border-radius:50%;background:var(--grad);color:var(--ink);font-weight:800;display:grid;place-items:center;font-size:14px}
+.duas{display:grid;grid-template-columns:1fr;gap:14px}
+@media (min-width:720px){.duas{grid-template-columns:1fr 1fr}}
+label{display:grid;gap:6px;font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.02em;min-width:0}
+small{font-weight:400;color:var(--dim)}
+input,textarea,select{font:500 15px var(--font);color:var(--fg);background:var(--campo);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+textarea{resize:vertical;line-height:1.5}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--yellow);outline-offset:1px;border-color:transparent}
+input[type=checkbox]{width:18px;height:18px;padding:0;accent-color:var(--orange)}
+.linha{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font:600 14px var(--font);border-radius:10px;padding:10px 15px;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--fg)}
+button.forte{background:var(--grad);color:var(--ink);border-color:transparent}
+button.mini{font-size:12px;padding:6px 10px}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
+.msg{font-size:13px;font-weight:600;min-height:18px;margin:0;color:var(--ok)}
+.msg.ruim{color:var(--bad)}
+.dica{font-size:13px;color:var(--dim);margin:0;line-height:1.55}
+.estado{font-size:13px;font-weight:700}
+.estado.on{color:var(--ok)} .estado.off{color:var(--bad)}
+.etapas{display:grid;gap:12px}
+details.etapa{border:1px solid var(--line);border-radius:12px;background:var(--campo);padding:12px 14px;min-width:0}
+details.etapa summary{cursor:pointer;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;font-weight:600;font-size:14px;list-style:none}
+details.etapa summary::-webkit-details-marker{display:none}
+details.etapa summary .dia{font-size:12px;color:var(--yellow);font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+details.etapa[open] summary{margin-bottom:12px}
+.etapa .grade{display:grid;gap:10px}
+.opcoes{display:flex;flex-wrap:wrap;gap:6px}
+.opcoes button{font-size:12px;font-weight:500;padding:5px 9px;color:var(--muted)}
+.regras{margin:0;padding-left:18px;color:var(--muted);font-size:13.5px;line-height:1.7}
+.dias{display:flex;flex-wrap:wrap;gap:8px}
+.dias label,.janelas label{display:flex;align-items:center;gap:6px;font-weight:500;color:var(--fg);border:1px solid var(--line);border-radius:999px;padding:6px 12px;background:var(--campo);cursor:pointer}
+.janelas{display:flex;flex-wrap:wrap;gap:8px}
+.leads-tab{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:700}
+tr:last-child td{border-bottom:0}
+td.erro{color:var(--bad)}
+.plano{display:grid;gap:12px}
+details.lead{border:1px solid var(--line);border-radius:12px;background:var(--campo);padding:12px 14px;min-width:0}
+details.lead summary{cursor:pointer;list-style:none;display:grid;gap:4px}
+details.lead summary::-webkit-details-marker{display:none}
+details.lead summary b{font-size:15px}
+details.lead summary span{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.envio{border-top:1px solid var(--line);padding-top:12px;margin-top:12px;display:grid;gap:8px}
+.envio .topo{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.envio .topo b{font-size:13px;color:var(--yellow)}
+.envio .topo input[type=datetime-local]{width:auto;flex:0 1 230px;font-size:13px;padding:7px 10px}
+.envio.off{opacity:.45}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:11.5px;font-weight:600;border-radius:999px;padding:4px 10px;background:rgba(241,243,238,.08);color:var(--muted);font-variant-numeric:tabular-nums}
+.chip.ENVIADO{background:rgba(46,229,157,.14);color:var(--ok)}
+.chip.AGENDADO{background:rgba(253,189,16,.13);color:var(--yellow)}
+.chip.RESPONDEU{background:rgba(46,229,157,.25);color:#fff}
+.chip.FALHOU,.chip.INVALIDO{background:rgba(255,77,77,.16);color:var(--bad)}
+.acomp{display:grid;gap:10px}
+.acomp .item{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--campo);display:grid;gap:8px}
+.acomp .cab{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;justify-content:space-between}
+.acomp .cab div{min-width:0;overflow-wrap:anywhere}
+.acomp .whats{font-size:12.5px;color:var(--yellow)}
+.resumo{display:flex;flex-wrap:wrap;gap:8px}
+.resumo span{font-size:13px;border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-variant-numeric:tabular-nums}
+.resumo b{font-size:16px;margin-right:4px}
+pre.codigo{margin:0;max-width:100%;max-height:240px;overflow:auto;background:#032a34;border:1px solid var(--line);border-radius:10px;padding:12px;font:12px/1.5 ui-monospace,Consolas,monospace;color:#d7e6e8;white-space:pre}
+details.config{min-width:0;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--campo)}
+details.config summary{cursor:pointer;font-weight:600;font-size:14px}
+details.config[open] summary{margin-bottom:12px}
+.passos{margin:0 0 12px;padding-left:18px;font-size:13px;color:var(--muted);line-height:1.6}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header><img src="assets/logo-take3.svg" alt="Take3 Digital"><a href="gerar.html">← Gerador de orçamento</a></header>
+  <section>
+    <p class="eyebrow">Uso interno · Take3</p>
+    <h1>Cadência de prospecção</h1>
+    <p class="sub">Cinco e-mails por lead, agendados no melhor horário e enviados um a um pelo seu Gmail. O próprio Google envia na hora marcada, mesmo com o computador desligado, e para a sequência sozinho quando o lead responde.</p>
+  </section>
+
+  <!-- 0 · Conexão -->
+  <section class="card" id="conexao">
+    <div class="linha" style="justify-content:space-between">
+      <h2>Conexão com o seu Gmail</h2>
+      <span class="estado off" id="estado">verificando…</span>
+    </div>
+    <p class="dica" id="estadoTxt"></p>
+    <details class="config" id="cfg">
+      <summary>Configurar ou atualizar o script (versão 2)</summary>
+      <ol class="passos">
+        <li>No <b>script.google.com</b>, abra o projeto do envio (ou crie um novo). <b>Apague tudo</b> e cole o código abaixo. Troque <b>troque-esta-senha</b> pela sua senha e salve (Ctrl+S).</li>
+        <li>Escolha a função <b>autorizar</b> e clique em <b>Executar</b>. Autorize de novo: a versão 2 pede também a planilha da fila e o relógio que envia os agendados.</li>
+        <li><b>Implantar → Gerenciar implantações → lápis → Versão: Nova versão → Implantar.</b> Executar como: Eu · Quem pode acessar: Qualquer pessoa. A URL continua a mesma.</li>
+        <li>Cole a URL (termina em /exec) e a senha aqui embaixo e clique em Salvar e testar.</li>
+      </ol>
+      <pre class="codigo" id="codigo"></pre>
+      <div class="linha" style="margin-top:8px"><button type="button" id="copiarCodigo">Copiar o código</button></div>
+      <div class="duas" style="margin-top:12px">
+        <label for="dirUrl">URL do app da Web<input id="dirUrl" type="url" autocomplete="off" placeholder="https://script.google.com/macros/s/.../exec"></label>
+        <label for="dirSenha">Senha do script<input id="dirSenha" type="password" autocomplete="off"></label>
+      </div>
+      <label for="dirNome" style="margin-top:12px">Nome do remetente<input id="dirNome" maxlength="80" value="Take3 Digital"></label>
+      <div class="linha" style="margin-top:12px"><button type="button" class="forte" id="testar">Salvar e testar</button></div>
+      <p class="msg" id="cfgMsg"></p>
+    </details>
+  </section>
+
+  <!-- 1 · Leads -->
+  <section class="card">
+    <div class="passo"><span class="n">1</span><h2>Leads</h2></div>
+    <label for="leads">Um por linha: <span>Nome; Empresa; e-mail; Observação real; Segmento</span> <small>(observação e segmento são opcionais · a observação entra no 1º e-mail, escreva como frase: "Vi que os combos de vocês no iFood estão sem foto.")</small>
+      <textarea id="leads" rows="6" placeholder="Fernando; A Pizza; fernando@apizza.com.br; Vi que o cardápio de vocês no iFood não tem fotos nos combos.; pizzarias&#10;Ana; Sushi Lá; ana@sushila.com.br; ; restaurantes japoneses"></textarea></label>
+    <div class="linha"><button type="button" id="lerLeads">Conferir leads</button><span class="dica" id="leadsResumo"></span></div>
+    <div class="leads-tab" id="leadsTab" hidden></div>
+  </section>
+
+  <!-- 2 · Sequência -->
+  <section class="card">
+    <div class="passo"><span class="n">2</span><h2>Sequência de e-mails</h2></div>
+    <p class="dica">Vale para todos os leads. No passo 3 dá para mudar o texto de cada lead, um por um. Marcadores: <b>{nome}</b>, <b>{empresa}</b>, <b>{observacao}</b> (a linha some se o lead não tiver observação) e <b>{segmento}</b>.</p>
+    <div class="etapas" id="etapas"></div>
+    <label for="assinatura">Assinatura <small>(vai no fim de todos os e-mails)</small><textarea id="assinatura" rows="3"></textarea></label>
+    <div class="linha"><button type="button" id="salvarModelo">Salvar sequência</button><button type="button" id="restaurar">Voltar ao modelo original</button></div>
+    <p class="msg" id="modeloMsg"></p>
+    <details class="config">
+      <summary>Regras da cadência</summary>
+      <ul class="regras">
+        <li>Respondeu qualquer e-mail: a sequência dele para sozinha. Responda de forma humana e personalizada.</li>
+        <li>Pediu para parar: clique em "Parar sequência" no acompanhamento.</li>
+        <li>WhatsApp só depois do 2º ou 3º e-mail, leve: "Te mandei um e-mail sobre a análise da {empresa}, viu?". O acompanhamento avisa quando chega a hora.</li>
+        <li>Personalização mínima: nome da empresa + 1 observação real.</li>
+        <li>Melhor horário: terça a quinta, das 9h às 11h ou das 14h às 16h (é o padrão do agendamento).</li>
+      </ul>
+    </details>
+  </section>
+
+  <!-- 3 · Agendar -->
+  <section class="card">
+    <div class="passo"><span class="n">3</span><h2>Agendar</h2></div>
+    <div class="duas">
+      <label for="inicio">Começar a partir de<input id="inicio" type="date"></label>
+      <label for="intervalo">Minutos entre um lead e outro <small>(espalha os envios)</small><input id="intervalo" type="number" min="1" max="60" value="4"></label>
+    </div>
+    <div><p class="dica" style="margin-bottom:8px">Dias em que pode enviar</p><div class="dias" id="dias"></div></div>
+    <div><p class="dica" style="margin-bottom:8px">Horários</p><div class="janelas">
+      <label><input type="checkbox" id="janManha" checked> 9h às 11h</label>
+      <label><input type="checkbox" id="janTarde" checked> 14h às 16h</label>
+    </div></div>
+    <div class="linha"><button type="button" class="forte" id="montar">Montar o calendário</button></div>
+    <p class="msg" id="planoMsg"></p>
+    <div class="plano" id="plano"></div>
+    <div class="linha" id="agendarBox" hidden><button type="button" class="forte" id="agendar">Agendar</button><span class="dica">Depois de agendado, o envio acontece no Google. Você pode fechar esta página.</span></div>
+  </section>
+
+  <!-- 4 · Acompanhar -->
+  <section class="card">
+    <div class="linha" style="justify-content:space-between">
+      <div class="passo"><span class="n">4</span><h2>Acompanhamento</h2></div>
+      <div class="linha"><a id="linkPlanilha" href="#" target="_blank" rel="noopener" hidden style="color:var(--yellow);font-weight:600;font-size:14px">Abrir a planilha da fila</a><button type="button" id="atualizar">Atualizar</button></div>
+    </div>
+    <div class="resumo" id="resumo"></div>
+    <input id="buscaAcomp" type="search" placeholder="Buscar lead, empresa ou e-mail" aria-label="Buscar no acompanhamento">
+    <div class="acomp" id="acomp"><p class="dica">Clique em Atualizar para ver a fila.</p></div>
+    <p class="msg" id="acompMsg"></p>
+  </section>
+</main>
+<script src="script-gmail.js"></script>
+<script>
+(function(){
+  'use strict';
+  var $ = function(id){ return document.getElementById(id); };
+  function lerLS(k, p){ try { var v = localStorage.getItem(k); return v === null ? p : v; } catch (e) { return p; } }
+  function gravarLS(k, v){ try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function emailOk(x){ return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(x || ''); }
+  function dd(n){ return ('0' + n).slice(-2); }
+  function dataHora(d){ d = new Date(d); return isNaN(d) ? '—' : dd(d.getDate()) + '/' + dd(d.getMonth() + 1) + ' ' + dd(d.getHours()) + ':' + dd(d.getMinutes()); }
+  var SEMANA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+  function diaSemana(d){ return SEMANA[new Date(d).getDay()]; }
+  function localInput(d){ return d.getFullYear() + '-' + dd(d.getMonth() + 1) + '-' + dd(d.getDate()) + 'T' + dd(d.getHours()) + ':' + dd(d.getMinutes()); }
+  function isoDia(d){ return d.getFullYear() + '-' + dd(d.getMonth() + 1) + '-' + dd(d.getDate()); }
+
+  // ── Modelo: a sequência de 5 e-mails ──
+  var PADRAO = [
+    { dia: 1, nome: 'Abertura + valor específico',
+      assuntos: ['{nome}, notei um ponto na {empresa} que vale a pena olhar', 'Análise rápida da operação de {empresa}', 'Vi algo na {empresa} que pode estar custando vendas'],
+      corpo: 'Oi {nome},\n\nPassei um tempo estudando a operação de delivery da {empresa} e vi alguns padrões que, em {segmento}, costumam derrubar a recompra e o ticket médio.\n\n{observacao}\n\nMontei uma análise bem objetiva (sem enrolação) com os principais pontos.\n\nPrefere que eu te mande por aqui ou prefere 10-12 minutos de call para eu te mostrar direto?' },
+    { dia: 3, nome: 'Insight + prova',
+      assuntos: ['O ponto que mais impacta a recompra no delivery', 'Continuando sobre a análise da {empresa}'],
+      corpo: '{nome},\n\nUm dos pontos que mais aparece em operações de delivery como a de vocês é o tempo de recompra do cliente.\n\nQuando a gente mede isso direito, normalmente descobre que uma parte relevante da base demora mais do que deveria para voltar a pedir, e isso tem solução relativamente simples.\n\nPosso te mostrar os 2-3 pontos principais que identifiquei no caso de vocês?\n\nSe preferir, me fala um horário que eu te ligo (hoje ou amanhã).' },
+    { dia: 6, nome: 'Case / prova social + CTA forte',
+      assuntos: ['Exemplo prático + o que vi na {empresa}', 'Como uma operação parecida aumentou a recompra'],
+      corpo: '{nome},\n\nTe mando um exemplo rápido: em uma operação parecida, só ajustando a comunicação de recompra e o timing do pós-venda, o retorno dos clientes aumentou de forma bem consistente em poucas semanas.\n\nNo caso de vocês, identifiquei pontos semelhantes.\n\nQuer que eu te mostre exatamente o que vi e o que eu faria?\n\nPode ser uma call curta de 10-15 minutos. Me fala o melhor horário.' },
+    { dia: 9, nome: 'Oferta clara + facilidade',
+      assuntos: ['Prefere que eu te mande a análise por escrito?', 'Última tentativa de te mostrar a análise'],
+      corpo: '{nome},\n\nNão quero ficar insistindo.\n\nSe fizer sentido para você, posso te mandar a análise completa por escrito (bem objetiva) ou podemos fazer uma call rápida.\n\nO que prefere?\n\nSe não for o momento, sem problema, é só me falar.' },
+    { dia: 12, nome: 'Break-up (saída elegante)',
+      assuntos: ['Fechando o ciclo por aqui', 'Vou parar de te enviar sobre isso'],
+      corpo: '{nome},\n\nVou encerrar por aqui para não ficar enchendo sua caixa de entrada.\n\nSe em algum momento fizer sentido olhar a operação de delivery e recompra com mais calma, é só me responder este e-mail.\n\nSucesso aí na {empresa}.' }
+  ];
+  var ASSINATURA = 'Abraço,\nEquipe Take3 Digital';
+  var modelo = carregarModelo();
+  function carregarModelo(){
+    try { var m = JSON.parse(lerLS('take3.cadencia.modelo', '')); if (Array.isArray(m) && m.length === PADRAO.length) return m; } catch (e) {}
+    return PADRAO.map(function(p){ return { dia: p.dia, ativo: true, assunto: p.assuntos[0], corpo: p.corpo }; });
+  }
+  $('assinatura').value = lerLS('take3.cadencia.assinatura', ASSINATURA);
+
+  function renderEtapas(){
+    $('etapas').innerHTML = modelo.map(function(m, i){
+      var p = PADRAO[i];
+      return '<details class="etapa"' + (i === 0 ? ' open' : '') + '><summary><input type="checkbox" data-ativo="' + i + '"' + (m.ativo ? ' checked' : '') + ' aria-label="Usar o e-mail ' + (i + 1) + '"><span class="dia">E-mail ' + (i + 1) + ' · dia ' + m.dia + '</span><span>' + esc(p.nome) + '</span></summary>' +
+        '<div class="grade"><div class="duas"><label>Assunto<input data-campo="assunto" data-i="' + i + '" maxlength="160" value="' + esc(m.assunto) + '"></label>' +
+        '<label>Dia da sequência <small>(o 1º é o dia 1)</small><input data-campo="dia" data-i="' + i + '" type="number" min="1" max="60" value="' + m.dia + '"></label></div>' +
+        '<div class="opcoes">' + p.assuntos.map(function(a){ return '<button type="button" data-opcao="' + i + '" data-texto="' + esc(a) + '">' + esc(a) + '</button>'; }).join('') + '</div>' +
+        '<label>Texto<textarea data-campo="corpo" data-i="' + i + '" rows="10">' + esc(m.corpo) + '</textarea></label></div></details>';
+    }).join('');
+  }
+  renderEtapas();
+  $('etapas').addEventListener('input', function(e){
+    var t = e.target, i = +t.dataset.i;
+    if (t.dataset.campo === 'dia') modelo[i].dia = Math.max(1, +t.value || 1);
+    else if (t.dataset.campo) modelo[i][t.dataset.campo] = t.value;
+  });
+  $('etapas').addEventListener('change', function(e){ if (e.target.dataset.ativo !== undefined) modelo[+e.target.dataset.ativo].ativo = e.target.checked; });
+  $('etapas').addEventListener('click', function(e){
+    var b = e.target.closest('[data-opcao]'); if (!b) return;
+    var i = +b.dataset.opcao; modelo[i].assunto = b.dataset.texto;
+    document.querySelector('[data-campo="assunto"][data-i="' + i + '"]').value = b.dataset.texto;
+  });
+  $('salvarModelo').addEventListener('click', function(){
+    var ok = gravarLS('take3.cadencia.modelo', JSON.stringify(modelo)) && gravarLS('take3.cadencia.assinatura', $('assinatura').value);
+    $('modeloMsg').textContent = ok ? 'Sequência salva neste navegador.' : 'Este navegador não deixou salvar.';
+  });
+  $('restaurar').addEventListener('click', function(){
+    modelo = PADRAO.map(function(p){ return { dia: p.dia, ativo: true, assunto: p.assuntos[0], corpo: p.corpo }; });
+    $('assinatura').value = ASSINATURA; renderEtapas(); $('modeloMsg').textContent = 'Modelo original de volta (clique em Salvar para guardar).';
+  });
+
+  // ── Leads ──
+  var leads = [];
+  function lerLeads(){
+    var erros = [], vistos = {};
+    leads = $('leads').value.split('\n').map(function(l){ return l.trim(); }).filter(Boolean).map(function(l, n){
+      var p = l.split(/\s*[;\t]\s*/);
+      var lead = { nome: (p[0] || '').trim(), empresa: (p[1] || '').trim(), email: (p[2] || '').trim().toLowerCase(), obs: (p[3] || '').trim(), segmento: (p[4] || '').trim() };
+      var falta = [];
+      if (!lead.nome) falta.push('nome'); if (!lead.empresa) falta.push('empresa'); if (!emailOk(lead.email)) falta.push('e-mail válido');
+      if (vistos[lead.email]) falta.push('e-mail repetido');
+      if (falta.length){ erros.push('Linha ' + (n + 1) + ': falta ' + falta.join(', ')); return null; }
+      vistos[lead.email] = 1; return lead;
+    }).filter(Boolean);
+    $('leadsTab').hidden = !leads.length && !erros.length;
+    $('leadsTab').innerHTML = '<table><thead><tr><th>Nome</th><th>Empresa</th><th>E-mail</th><th>Observação</th><th>Segmento</th></tr></thead><tbody>' +
+      leads.map(function(x){ return '<tr><td>' + esc(x.nome) + '</td><td>' + esc(x.empresa) + '</td><td>' + esc(x.email) + '</td><td>' + (x.obs ? esc(x.obs) : '<span style="color:var(--bad)">sem observação</span>') + '</td><td>' + esc(x.segmento || 'operações de delivery') + '</td></tr>'; }).join('') +
+      erros.map(function(e){ return '<tr><td colspan="5" class="erro">' + esc(e) + ' (linha ignorada)</td></tr>'; }).join('') + '</tbody></table>';
+    var semObs = leads.filter(function(x){ return !x.obs; }).length;
+    $('leadsResumo').textContent = leads.length + ' lead(s) ok' + (erros.length ? ' · ' + erros.length + ' ignorada(s)' : '') + (semObs ? ' · ' + semObs + ' sem observação real (a regra pede uma)' : '');
+    gravarLS('take3.cadencia.leads', $('leads').value);
+    return leads;
+  }
+  $('leads').value = lerLS('take3.cadencia.leads', '');
+  $('lerLeads').addEventListener('click', lerLeads);
+
+  function preencher(texto, lead){
+    var v = { nome: lead.nome.split(/\s+/)[0], empresa: lead.empresa, observacao: lead.obs, segmento: lead.segmento || 'operações de delivery' };
+    return texto.split('\n').filter(function(linha){ return !(/\{observacao\}/.test(linha) && !lead.obs && linha.replace('{observacao}', '').trim() === ''); }).join('\n')
+      .replace(/\{(nome|empresa|observacao|segmento)\}/g, function(m, k){ return v[k]; })
+      .replace(/\n{3,}/g, '\n\n');
+  }
+
+  // ── Agenda: dias e horários permitidos ──
+  var diasPadrao = [2, 3, 4];
+  try { var dSalvos = JSON.parse(lerLS('take3.cadencia.dias', '')); if (Array.isArray(dSalvos) && dSalvos.length) diasPadrao = dSalvos; } catch (e) {}
+  $('dias').innerHTML = [1, 2, 3, 4, 5, 6, 0].map(function(d){ return '<label><input type="checkbox" data-dia="' + d + '"' + (diasPadrao.indexOf(d) >= 0 ? ' checked' : '') + '> ' + SEMANA[d] + '</label>'; }).join('');
+  $('inicio').value = isoDia(new Date());
+  function regras(){
+    var dias = {}; document.querySelectorAll('[data-dia]').forEach(function(c){ if (c.checked) dias[c.dataset.dia] = true; });
+    var jan = []; if ($('janManha').checked) jan.push([9, 11]); if ($('janTarde').checked) jan.push([14, 16]);
+    return { dias: dias, janelas: jan };
+  }
+  // Primeiro momento >= d que cai num dia permitido e dentro de um horário.
+  function proximoHorario(d, r){
+    var x = new Date(d);
+    for (var k = 0; k < 400; k++){
+      if (r.dias[x.getDay()]){
+        var h = x.getHours() + x.getMinutes() / 60;
+        for (var j = 0; j < r.janelas.length; j++){
+          if (h >= r.janelas[j][0] && h < r.janelas[j][1]) return x;
+          if (h < r.janelas[j][0]){ x.setHours(r.janelas[j][0], 0, 0, 0); return x; }
+        }
+      }
+      x.setDate(x.getDate() + 1); x.setHours(0, 0, 0, 0);
+    }
+    return x;
+  }
+  function inicioDoDia(d){ var x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
+  function maisDias(d, n){ var x = new Date(d); x.setDate(x.getDate() + n); return x; }
+
+  var plano = [];
+  function montar(){
+    var r = regras();
+    if (!Object.keys(r.dias).length || !r.janelas.length){ $('planoMsg').className = 'msg ruim'; $('planoMsg').textContent = 'Escolha pelo menos um dia e um horário.'; return; }
+    lerLeads();
+    if (!leads.length){ $('planoMsg').className = 'msg ruim'; $('planoMsg').textContent = 'Cole os leads no passo 1.'; return; }
+    var ativos = modelo.map(function(m, i){ return { i: i, m: m }; }).filter(function(x){ return x.m.ativo; });
+    if (!ativos.length){ $('planoMsg').className = 'msg ruim'; $('planoMsg').textContent = 'Marque pelo menos um e-mail da sequência.'; return; }
+    gravarLS('take3.cadencia.dias', JSON.stringify(Object.keys(r.dias).map(Number)));
+    var p = $('inicio').value.split('-'), base = new Date(+p[0], +p[1] - 1, +p[2]);
+    var agora = new Date(Date.now() + 10 * 60e3), passo = Math.max(1, +$('intervalo').value || 4), lote = Date.now().toString(36);
+    var assinatura = $('assinatura').value.trim();
+    // O 1º e-mail de cada lead sai espalhado; os seguintes contam os dias a partir do 1º.
+    var cursor = proximoHorario(base < agora ? agora : base, r);
+    plano = leads.map(function(lead){
+      var primeiro = null, anterior = null;
+      var envios = ativos.map(function(a, k){
+        var quando;
+        if (k === 0){ quando = new Date(cursor); primeiro = quando; cursor = proximoHorario(new Date(cursor.getTime() + (passo + Math.floor(Math.random() * 2)) * 60e3), r); }
+        else {
+          var alvo = maisDias(inicioDoDia(primeiro), a.m.dia - ativos[0].m.dia);
+          var minimo = maisDias(inicioDoDia(anterior), 1);
+          alvo = alvo < minimo ? minimo : alvo;
+          // Mesmo minuto do 1º envio para manter os leads espalhados.
+          alvo.setHours(primeiro.getHours(), primeiro.getMinutes(), 0, 0);
+          quando = proximoHorario(alvo, r);
+        }
+        anterior = quando;
+        var corpo = preencher(a.m.corpo, lead) + (assinatura ? '\n\n' + assinatura : '');
+        return { etapa: a.i + 1, ativo: true, quando: quando, assunto: preencher(a.m.assunto, lead), corpo: corpo };
+      });
+      return { lead: lead, chave: lead.email + '#' + lote, envios: envios };
+    });
+    renderPlano();
+  }
+  function renderPlano(){
+    var total = plano.reduce(function(s, x){ return s + x.envios.filter(function(e){ return e.ativo; }).length; }, 0);
+    var fim = plano.reduce(function(m, x){ return x.envios.reduce(function(mm, e){ return e.quando > mm ? e.quando : mm; }, m); }, new Date(0));
+    $('planoMsg').className = 'msg';
+    $('planoMsg').textContent = plano.length + ' lead(s) · ' + total + ' e-mail(s) · último envio em ' + dataHora(fim) + '. Abra cada lead para conferir ou mudar o texto só dele.';
+    $('plano').innerHTML = plano.map(function(x, li){
+      return '<details class="lead"><summary><b>' + esc(x.lead.nome) + ' · ' + esc(x.lead.empresa) + '</b><span>' + esc(x.lead.email) + ' · ' +
+        x.envios.map(function(e){ return 'E' + e.etapa + ' ' + diaSemana(e.quando) + ' ' + dataHora(e.quando); }).join(' · ') + '</span></summary>' +
+        x.envios.map(function(e, ei){
+          return '<div class="envio' + (e.ativo ? '' : ' off') + '" data-li="' + li + '" data-ei="' + ei + '"><div class="topo"><label style="display:flex;align-items:center;gap:6px;color:var(--fg)"><input type="checkbox" data-f="ativo"' + (e.ativo ? ' checked' : '') + '> <b>E-mail ' + e.etapa + '</b></label>' +
+            '<input type="datetime-local" data-f="quando" value="' + localInput(e.quando) + '" aria-label="Data e hora do e-mail ' + e.etapa + '"></div>' +
+            '<label>Assunto<input data-f="assunto" maxlength="200" value="' + esc(e.assunto) + '"></label>' +
+            '<label>Texto<textarea data-f="corpo" rows="8">' + esc(e.corpo) + '</textarea></label></div>';
+        }).join('') + '</details>';
+    }).join('');
+    $('agendarBox').hidden = !plano.length;
+    $('agendar').textContent = 'Agendar ' + total + ' e-mail(s)';
+    $('agendar').dataset.confirmar = '';
+  }
+  $('montar').addEventListener('click', montar);
+  function campoPlano(e){
+    var box = e.target.closest('.envio'), f = e.target.dataset.f; if (!box || !f) return;
+    var env = plano[+box.dataset.li].envios[+box.dataset.ei];
+    if (f === 'ativo'){ env.ativo = e.target.checked; box.classList.toggle('off', !env.ativo); var total = plano.reduce(function(s, x){ return s + x.envios.filter(function(z){ return z.ativo; }).length; }, 0); $('agendar').textContent = 'Agendar ' + total + ' e-mail(s)'; }
+    else if (f === 'quando'){ var d = new Date(e.target.value); if (!isNaN(d)) env.quando = d; }
+    else env[f] = e.target.value;
+  }
+  $('plano').addEventListener('input', campoPlano);
+  $('plano').addEventListener('change', campoPlano);
+
+  // ── Conexão com o script ──
+  $('codigo').textContent = window.TAKE3_SCRIPT_GMAIL || '';
+  $('copiarCodigo').addEventListener('click', function(){
+    var t = window.TAKE3_SCRIPT_GMAIL || '';
+    var ok = function(){ $('cfgMsg').className = 'msg'; $('cfgMsg').textContent = 'Código copiado. Cole no script.google.com.'; };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(ok, function(){ prompt('Copie o código:', t); }); else prompt('Copie o código:', t);
+  });
+  $('dirUrl').value = lerLS('take3.dirUrl', ''); $('dirSenha').value = lerLS('take3.dirSenha', ''); $('dirNome').value = lerLS('take3.dirNome', 'Take3 Digital');
+  function postar(dados){
+    var url = lerLS('take3.dirUrl', '');
+    if (!url) return Promise.resolve({ ok: false, erro: 'Configure a conexão com o Gmail primeiro.' });
+    return fetch(url, { method: 'POST', body: JSON.stringify(Object.assign({ senha: lerLS('take3.dirSenha', ''), remetente: lerLS('take3.dirNome', 'Take3 Digital') }, dados)) })
+      .then(function(r){ return r.json(); })
+      .catch(function(){ return { ok: false, erro: 'Não consegui falar com o script. Abra a URL numa aba anônima: tem que aparecer "Envio direto Take3: funcionando". Se pedir login, a implantação não está como "Qualquer pessoa".' }; });
+  }
+  var versaoOk = false;
+  function mostrarEstado(r){
+    versaoOk = !!(r && r.ok && r.versao >= (window.TAKE3_SCRIPT_VERSAO || 2));
+    $('estado').className = 'estado ' + (versaoOk ? 'on' : 'off');
+    $('estado').textContent = versaoOk ? 'conectado' : (r && r.ok ? 'atualize o script' : 'desconectado');
+    $('estadoTxt').textContent = versaoOk ? 'Script versão ' + r.versao + ' ligado. Hoje ainda dá para enviar ' + r.restante + ' e-mail(s) por essa conta.'
+      : r && r.ok ? 'Seu script é da versão anterior (só envia na hora). Para agendar, abra "Configurar ou atualizar o script" e siga os 4 passos.'
+      : (r && r.erro ? r.erro : 'Abra "Configurar ou atualizar o script" e siga os passos.');
+    if (!versaoOk) $('cfg').open = true;
+  }
+  function verificar(){ if (!lerLS('take3.dirUrl', '')) { mostrarEstado(null); return Promise.resolve(); } return postar({ teste: true }).then(mostrarEstado); }
+  $('testar').addEventListener('click', function(){
+    gravarLS('take3.dirUrl', $('dirUrl').value.trim()); gravarLS('take3.dirSenha', $('dirSenha').value); gravarLS('take3.dirNome', $('dirNome').value.trim() || 'Take3 Digital');
+    $('cfgMsg').className = 'msg'; $('cfgMsg').textContent = 'Testando…';
+    postar({ teste: true }).then(function(r){
+      mostrarEstado(r);
+      if (r.ok) gravarLS('take3.dirOk', '1');
+      $('cfgMsg').className = 'msg' + (versaoOk ? '' : ' ruim');
+      $('cfgMsg').textContent = versaoOk ? 'Conectado.' : (r.ok ? 'Conectou, mas o script é da versão anterior: cole o código novo e publique Nova versão.' : r.erro);
+    });
+  });
+
+  // ── Agendar ──
+  $('agendar').addEventListener('click', function(){
+    var btn = this;
+    if (!versaoOk){ $('planoMsg').className = 'msg ruim'; $('planoMsg').textContent = 'Conecte o script versão 2 no topo da página antes de agendar.'; $('conexao').scrollIntoView({ behavior: 'smooth' }); return; }
+    var itens = [];
+    plano.forEach(function(x){ x.envios.forEach(function(e){ if (e.ativo) itens.push({ lead: x.chave, email: x.lead.email, nome: x.lead.nome, empresa: x.lead.empresa, etapa: e.etapa, assunto: e.assunto, corpo: e.corpo, quando: e.quando.toISOString() }); }); });
+    var vazios = itens.filter(function(i){ return !i.assunto.trim() || !i.corpo.trim(); }).length;
+    if (vazios){ $('planoMsg').className = 'msg ruim'; $('planoMsg').textContent = vazios + ' e-mail(s) sem assunto ou texto.'; return; }
+    var pendentes = itens.filter(function(i){ return /\{[a-z]+\}|\[[^\]]*\]/i.test(i.assunto + i.corpo); }).length;
+    if (btn.dataset.confirmar !== '1'){
+      btn.dataset.confirmar = '1';
+      btn.textContent = 'Confirmar: agendar ' + itens.length + ' e-mail(s)';
+      $('planoMsg').className = 'msg' + (pendentes ? ' ruim' : '');
+      $('planoMsg').textContent = pendentes ? 'Atenção: ' + pendentes + ' e-mail(s) ainda têm marcador sem preencher (algo entre { } ou [ ]). Confira antes de confirmar.' : 'Confira o calendário e clique de novo para confirmar.';
+      return;
+    }
+    btn.dataset.confirmar = ''; btn.disabled = true; $('planoMsg').className = 'msg'; $('planoMsg').textContent = 'Conferindo leads que já estão em sequência…';
+    postar({ acao: 'listar' }).then(function(r){
+      var ativos = {};
+      if (r.ok) r.itens.forEach(function(i){ if (i.status === 'AGENDADO') ativos[String(i.email).toLowerCase()] = 1; });
+      var repetidos = {}; itens = itens.filter(function(i){ if (ativos[i.email]){ repetidos[i.email] = 1; return false; } return true; });
+      if (!itens.length){ btn.disabled = false; $('planoMsg').className = 'msg ruim'; $('planoMsg').textContent = 'Todos esses leads já têm sequência em andamento.'; return; }
+      // Em lotes, para não estourar o tamanho do pedido.
+      var lotes = []; for (var i = 0; i < itens.length; i += 150) lotes.push(itens.slice(i, i + 150));
+      var feitos = 0, erro = null;
+      (function proximo(k){
+        if (k >= lotes.length || erro){
+          btn.disabled = false;
+          var rep = Object.keys(repetidos);
+          $('planoMsg').className = 'msg' + (erro ? ' ruim' : '');
+          $('planoMsg').textContent = (erro ? 'Parou com erro: ' + erro + '. ' : '') + feitos + ' e-mail(s) agendado(s).' + (rep.length ? ' Fora (já em sequência): ' + rep.join(', ') + '.' : '');
+          if (feitos){ plano = []; $('plano').innerHTML = ''; $('agendarBox').hidden = true; carregarAcomp(); }
+          return;
+        }
+        postar({ acao: 'agendar', itens: lotes[k] }).then(function(res){ if (res.ok) feitos += res.agendados; else erro = res.erro; proximo(k + 1); });
+      })(0);
+    });
+  });
+
+  // ── Acompanhamento ──
+  var fila = [];
+  var ROTULO = { AGENDADO: 'agendado', ENVIADO: 'enviado', RESPONDEU: 'respondeu · parado', INVALIDO: 'e-mail não existe · parado', CANCELADO: 'cancelado', FALHOU: 'falhou' };
+  function carregarAcomp(aviso){
+    $('acompMsg').className = 'msg'; $('acompMsg').textContent = 'Carregando…';
+    return postar({ acao: 'listar' }).then(function(r){
+      if (!r.ok){ $('acompMsg').className = 'msg ruim'; $('acompMsg').textContent = r.erro; return; }
+      fila = r.itens; $('acompMsg').textContent = aviso || '';
+      if (r.planilha){ $('linkPlanilha').href = r.planilha; $('linkPlanilha').hidden = false; }
+      renderAcomp();
+    });
+  }
+  function renderAcomp(){
+    var por = {}, ordem = [];
+    fila.forEach(function(i){ if (!por[i.lead]){ por[i.lead] = []; ordem.push(i.lead); } por[i.lead].push(i); });
+    var hoje = isoDia(new Date()), cont = { AGENDADO: 0, enviadosHoje: 0, RESPONDEU: 0, FALHOU: 0 };
+    fila.forEach(function(i){ if (i.status === 'AGENDADO') cont.AGENDADO++; if (i.status === 'ENVIADO' && i.enviadoEm && isoDia(new Date(i.enviadoEm)) === hoje) cont.enviadosHoje++; if (i.status === 'FALHOU' || i.status === 'INVALIDO') cont.FALHOU++; });
+    ordem.forEach(function(l){ if (por[l].some(function(i){ return i.status === 'RESPONDEU'; })) cont.RESPONDEU++; });
+    $('resumo').innerHTML = '<span><b>' + ordem.length + '</b>leads</span><span><b>' + cont.AGENDADO + '</b>agendados</span><span><b>' + cont.enviadosHoje + '</b>enviados hoje</span><span><b>' + cont.RESPONDEU + '</b>responderam</span>' + (cont.FALHOU ? '<span style="color:var(--bad)"><b>' + cont.FALHOU + '</b>com falha</span>' : '');
+    var termo = ($('buscaAcomp').value || '').toLowerCase();
+    var lista = ordem.slice().reverse().filter(function(l){ var x = por[l][0]; return !termo || (x.nome + ' ' + x.empresa + ' ' + x.email).toLowerCase().indexOf(termo) >= 0; });
+    if (!lista.length){ $('acomp').innerHTML = '<p class="dica">' + (termo ? 'Nada para essa busca.' : 'Nenhum lead agendado ainda.') + '</p>'; return; }
+    $('acomp').innerHTML = lista.map(function(l){
+      var xs = por[l].sort(function(a, b){ return a.etapa - b.etapa; }), x = xs[0];
+      var temAgendado = xs.some(function(i){ return i.status === 'AGENDADO'; });
+      var respondeu = xs.some(function(i){ return i.status === 'RESPONDEU'; });
+      var enviados = xs.filter(function(i){ return i.status === 'ENVIADO'; }).length;
+      var whats = !respondeu && temAgendado && enviados >= 2 && enviados <= 3;
+      return '<div class="item"><div class="cab"><div><b>' + esc(x.nome) + ' · ' + esc(x.empresa) + '</b><div class="dica">' + esc(x.email) + '</div></div>' +
+        (temAgendado ? '<button type="button" class="mini" data-parar="' + esc(l) + '">Parar sequência</button>' : '') + '</div>' +
+        '<div class="chips">' + xs.map(function(i){
+          var quando = i.status === 'ENVIADO' || i.status === 'FALHOU' ? i.enviadoEm : i.quando;
+          return '<span class="chip ' + esc(i.status) + '" title="' + esc(i.assunto + (i.erro ? ' · ' + i.erro : '')) + '">E' + i.etapa + ' · ' + esc(ROTULO[i.status] || i.status) + (i.status === 'AGENDADO' || i.status === 'ENVIADO' ? ' ' + dataHora(quando) : '') + '</span>';
+        }).join('') + '</div>' +
+        (whats ? '<p class="whats">Hora do WhatsApp leve: "Te mandei um e-mail sobre a análise da ' + esc(x.empresa) + ', viu?"</p>' : '') + '</div>';
+    }).join('');
+  }
+  $('atualizar').addEventListener('click', function(){ carregarAcomp(); });
+  $('buscaAcomp').addEventListener('input', renderAcomp);
+  $('acomp').addEventListener('click', function(e){
+    var b = e.target.closest('[data-parar]'); if (!b) return;
+    if (b.dataset.confirmar !== '1'){ b.dataset.confirmar = '1'; b.textContent = 'Confirmar parada'; return; }
+    b.disabled = true;
+    postar({ acao: 'parar', lead: b.dataset.parar }).then(function(r){
+      if (!r.ok){ $('acompMsg').className = 'msg ruim'; $('acompMsg').textContent = r.erro; b.disabled = false; return; }
+      carregarAcomp('Sequência parada (' + r.parados + ' e-mail(s) cancelado(s)).');
+    });
+  });
+
+  verificar().then(function(){ if (versaoOk) carregarAcomp(); });
+})();
+</script>
+</body>
+</html>
