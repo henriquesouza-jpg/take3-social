@@ -438,6 +438,24 @@ details.config[open] summary{margin-bottom:12px}
     var vazios = itens.filter(function(i){ return !i.assunto.trim() || !i.corpo.trim(); }).length;
     if (vazios){ $('planoMsg').className = 'msg ruim'; $('planoMsg').textContent = vazios + ' e-mail(s) sem assunto ou texto.'; return; }
     var pendentes = itens.filter(function(i){ return /\{[a-z]+\}|\[[^\]]*\]/i.test(i.assunto + i.corpo); }).length;
+    // Trava: o e-mail de um lead não pode citar a empresa ou o e-mail de OUTRO lead
+    // (ex.: nome digitado no modelo em vez de {empresa}, ou texto colado no lead errado).
+    var cruzados = [];
+    itens.forEach(function(i){
+      var texto = (i.assunto + '\n' + i.corpo).toLowerCase(), propria = i.empresa.toLowerCase();
+      plano.forEach(function(x){
+        if (x.lead.email === i.email) return;
+        var emp = x.lead.empresa.toLowerCase();
+        if (emp.length >= 4 && emp !== propria && propria.indexOf(emp) < 0 && texto.indexOf(emp) >= 0) cruzados.push(i.empresa + ' (e-mail ' + i.etapa + ') cita ' + x.lead.empresa);
+        else if (texto.indexOf(x.lead.email) >= 0) cruzados.push(i.empresa + ' (e-mail ' + i.etapa + ') cita ' + x.lead.email);
+      });
+    });
+    if (cruzados.length){
+      btn.dataset.confirmar = ''; btn.textContent = 'Agendar ' + itens.length + ' e-mail(s)';
+      $('planoMsg').className = 'msg ruim';
+      $('planoMsg').textContent = 'Parei para você conferir: ' + cruzados.slice(0, 5).join(' · ') + (cruzados.length > 5 ? ' (+' + (cruzados.length - 5) + ')' : '') + '. Abra o lead e corrija o texto (no modelo, use {nome} e {empresa}).';
+      return;
+    }
     if (btn.dataset.confirmar !== '1'){
       btn.dataset.confirmar = '1';
       btn.textContent = 'Confirmar: agendar ' + itens.length + ' e-mail(s)';
